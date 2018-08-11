@@ -2,8 +2,8 @@ use specs::prelude::*;
 pub use std::time::Duration;
 
 pub struct Time {
-    elapsed: Duration,
     delta: Duration,
+    turn: u32,
 }
 
 impl Default for Time {
@@ -15,18 +15,21 @@ impl Default for Time {
 impl Time {
     pub fn new() -> Time {
         Time {
-            elapsed: Duration::from_secs(0),
             delta: Duration::from_secs(0),
+            turn: 0,
         }
     }
 
-    pub fn update(&mut self, delta: Duration) {
+    pub fn update_delta(&mut self, delta: Duration) {
         self.delta = delta;
-        self.elapsed += delta;
     }
 
-    pub fn now(&self) -> Duration {
-        self.elapsed
+    pub fn increment_turn(&mut self) {
+        self.turn += 1;
+    }
+
+    pub fn turn(&self) -> u32 {
+        self.turn
     }
 
     pub fn delta(&self) -> Duration {

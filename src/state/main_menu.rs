@@ -1,7 +1,5 @@
 use super::*;
 
-use time::*;
-
 pub struct MainMenu;
 
 impl State for MainMenu {
@@ -16,12 +14,7 @@ impl State for MainMenu {
     }
 
     fn update(&mut self, _ctx: &mut Context, _world: &mut World) -> GameResult<Transition> {
-        let time = _world.read_resource::<Time>();
-        if time.now() > Duration::from_secs(5) {
-            Ok(Transition::Pop)
-        } else {
-            Ok(Transition::None)
-        }
+        Ok(Transition::Push(Box::new(super::Game::new(_world))))
     }
 }
 

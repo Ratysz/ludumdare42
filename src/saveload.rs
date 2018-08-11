@@ -20,7 +20,7 @@ impl<'a> System<'a> for SaveWorld {
         Entities<'a>,
         ReadStorage<'a, U64Marker>,
         ReadStorage<'a, Position>,
-        ReadStorage<'a, Sprite>,
+        ReadStorage<'a, Tile>,
     );
 
     fn run(&mut self, (entities, markers, positions, sprites): Self::SystemData) {
@@ -49,7 +49,7 @@ impl<'a> System<'a> for LoadWorld {
         Write<'a, U64MarkerAllocator>,
         WriteStorage<'a, U64Marker>,
         WriteStorage<'a, Position>,
-        WriteStorage<'a, Sprite>,
+        WriteStorage<'a, Tile>,
     );
 
     fn run(

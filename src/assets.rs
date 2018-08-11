@@ -7,6 +7,7 @@ use std::collections::HashMap;
 pub enum DrawableHandle {
     Circle,
     Box,
+    FullTile,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -30,7 +31,7 @@ impl Assets {
             Mesh::new_circle(ctx, DrawMode::Fill, na::Point2::origin(), 5.0, 0.1)?,
         );
 
-        types.insert(DrawableHandle::Circle, DrawableType::Mesh);
+        types.insert(DrawableHandle::Box, DrawableType::Mesh);
         meshes.insert(
             DrawableHandle::Box,
             Mesh::new_polygon(
@@ -41,6 +42,23 @@ impl Assets {
                     na::Point2::new(5.0, -5.0),
                     na::Point2::new(5.0, 5.0),
                     na::Point2::new(-5.0, 5.0),
+                ],
+            )?,
+        );
+
+        types.insert(DrawableHandle::FullTile, DrawableType::Mesh);
+        meshes.insert(
+            DrawableHandle::FullTile,
+            Mesh::new_polygon(
+                ctx,
+                DrawMode::Fill,
+                &[
+                    na::Point2::new(0.0, 0.5),
+                    na::Point2::new(1.0, 0.0),
+                    na::Point2::new(1.0, -0.25),
+                    na::Point2::new(0.0, -0.75),
+                    na::Point2::new(-1.0, -0.25),
+                    na::Point2::new(-1.0, 0.0),
                 ],
             )?,
         );

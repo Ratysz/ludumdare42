@@ -1,10 +1,18 @@
-use ggez::{graphics, Context, GameResult};
+use ggez::{
+    graphics::{self, Color, DrawParam},
+    Context, GameResult,
+};
 use specs::prelude::*;
 use std::fmt::{Display, Formatter, Result};
 
+use assets::{Assets, DrawableHandle};
+use ecs::*;
 use input::{Command, InputExtra};
 
+mod game;
 mod main_menu;
+
+pub use self::game::Game;
 pub use self::main_menu::MainMenu;
 
 pub enum Transition {
@@ -46,7 +54,12 @@ pub trait State: Display {
         Ok(Transition::None)
     }
 
-    fn draw(&mut self, _ctx: &mut Context, _world: &mut World) -> GameResult<bool> {
+    fn draw(
+        &mut self,
+        _ctx: &mut Context,
+        _world: &mut World,
+        _assets: &Assets,
+    ) -> GameResult<bool> {
         Ok(false)
     }
 }

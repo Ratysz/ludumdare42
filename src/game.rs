@@ -122,10 +122,6 @@ impl Game {
 
 impl EventHandler for Game {
     fn update(&mut self, ctx: &mut Context) -> GameResult {
-        //while timer::check_update_time(ctx, 60) {
-        self.world
-            .write_resource::<Time>()
-            .update(timer::get_delta(ctx));
         let transition = match self.state_stack.last_mut() {
             Some(state) => match state.update(ctx, &mut self.world) {
                 Ok(transition) => transition,
@@ -142,14 +138,16 @@ impl EventHandler for Game {
         };
         self.handle_transition(ctx, transition);
         self.world.maintain();
-        //}
         Ok(())
     }
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         graphics::clear(ctx, Color::from([0.0, 0.0, 0.0, 1.0]));
+        self.world
+            .write_resource::<Time>()
+            .update_delta(timer::get_delta(ctx));
         while let Some(state) = self.state_stack.iter_mut().next_back() {
-            match state.draw(ctx, &mut self.world) {
+            match state.draw(ctx, &mut self.world, &self.assets) {
                 Ok(draw_underlying) => if !draw_underlying {
                     break;
                 },
@@ -164,6 +162,12 @@ impl EventHandler for Game {
     fn key_down_event(&mut self, ctx: &mut Context, key: KeyCode, mods: KeyMods, repeat: bool) {
         let resolved = self.input.key_down_event(ctx, key, mods.into(), repeat);
         self.propagate_input(ctx, resolved);
+    }
+
+    fn quit_event(&mut self, _ctx: &mut Context) -> bool {
+        trace!("quit_event() callback called, quitting...");
+        self.handle_transition(_ctx, Transition::PopAll);
+        false
     }
 
     fn resize_event(&mut self, ctx: &mut Context, width: f32, height: f32) {

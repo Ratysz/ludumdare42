@@ -1,7 +1,10 @@
 use specs::prelude::*;
+use specs::world::Index;
 
-pub mod position;
-pub mod sprite;
+pub mod grid;
+pub mod mapgen;
+pub mod tile;
 
-pub use self::position::Position;
-pub use self::sprite::Sprite;
+pub use self::grid::Grid;
+pub use self::grid::Position;
+pub use self::tile::Tile;
