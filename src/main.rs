@@ -5,6 +5,7 @@ extern crate ggez;
 #[macro_use]
 extern crate log;
 extern crate nalgebra;
+extern crate noise;
 extern crate rand;
 extern crate ron;
 extern crate serde;
@@ -30,7 +31,7 @@ mod state;
 mod time;
 
 fn wrapped() -> GameResult {
-    let w_dim = nalgebra::Vector2::new(640.0, 480.0);
+    let w_dim = nalgebra::Vector2::new(640.0, 380.0);
 
     let (ctx, events_loop) = &mut ContextBuilder::new("LD42", "Ratys")
         .window_setup(WindowSetup::default().title("LD42"))

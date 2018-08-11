@@ -1,7 +1,7 @@
 use super::*;
 use nalgebra as na;
 
-pub const TILE_SIZE_PX: (f32, f32) = (20.0, 20.0);
+pub const TILE_SIZE_PX: (f32, f32) = (30.0, 30.0);
 
 pub struct Game<'a, 'b> {
     logic: Dispatcher<'a, 'b>,
@@ -23,6 +23,7 @@ impl<'a, 'b> Game<'a, 'b> {
         let mut grid_populator = mapgen::PopulateGrid;
         <mapgen::PopulateGrid as System>::setup(&mut grid_populator, &mut world.res);
         grid_populator.run_now(&mut world.res);
+        world.maintain();
 
         Game { logic, animation }
     }
@@ -63,7 +64,7 @@ impl<'a, 'b> State for Game<'a, 'b> {
                             .dest(map_pos_to_screen(pos))
                             .color(map_pos_to_water_color(pos))
                             .scale(na::Vector2::new(TILE_SIZE_PX.0, TILE_SIZE_PX.1)),
-                    );
+                    )?;
                 }
                 Tile::Terrain => {
                     graphics::draw(
@@ -73,7 +74,7 @@ impl<'a, 'b> State for Game<'a, 'b> {
                             .dest(map_pos_to_screen(pos))
                             .color(map_pos_to_terrain_color(pos))
                             .scale(na::Vector2::new(TILE_SIZE_PX.0, TILE_SIZE_PX.1)),
-                    );
+                    )?;
                 }
                 _ => (),
             }
@@ -90,8 +91,8 @@ impl<'a, 'b> Display for Game<'a, 'b> {
 
 fn map_pos_to_screen(pos: &Position) -> na::Point2<f32> {
     na::Point2::new(
-        100.0 + (pos.x() as f32 * TILE_SIZE_PX.0) + (pos.y() as f32 * TILE_SIZE_PX.1),
-        200.0 + (pos.x() as f32 * TILE_SIZE_PX.0 * 0.5)
+        110.0 + (pos.x() as f32 * TILE_SIZE_PX.0) + (pos.y() as f32 * TILE_SIZE_PX.1),
+        240.0 + (pos.x() as f32 * TILE_SIZE_PX.0 * 0.5)
             - (pos.y() as f32 * TILE_SIZE_PX.1 * 0.5)
             - (pos.z() as f32 * TILE_SIZE_PX.0 * 0.25),
     )
@@ -100,16 +101,16 @@ fn map_pos_to_screen(pos: &Position) -> na::Point2<f32> {
 fn map_pos_to_water_color(pos: &Position) -> Color {
     Color::new(
         0.0,
-        0.2 * ((pos.z() as f32 + 1.0) / 8.0).min(1.0),
-        1.0 * ((pos.z() as f32 + 1.0) / 8.0).min(1.0),
+        0.2 * ((pos.z() as f32 + 1.0) / 4.0).min(1.0),
+        1.0 * ((pos.z() as f32 + 1.0) / 4.0).min(1.0),
         0.5,
     )
 }
 
 fn map_pos_to_terrain_color(pos: &Position) -> Color {
     Color::new(
-        0.8 * ((pos.z() as f32 + 1.0) / 8.0).min(1.0),
-        1.0 * ((pos.z() as f32 + 1.0) / 8.0).min(1.0),
+        0.4 * ((pos.z() as f32 + 1.0) / 12.0).min(1.0),
+        0.8 * ((pos.z() as f32 + 1.0) / 12.0).min(1.0),
         0.0,
         1.0,
     )

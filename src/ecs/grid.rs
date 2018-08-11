@@ -91,6 +91,17 @@ impl Grid {
     pub fn dimensions(&self) -> (usize, usize, usize) {
         self.dimensions
     }
+
+    pub fn entity_at(&self, x: usize, y: usize, z: usize) -> Option<Index> {
+        if let Some(row) = self.grid.get(x) {
+            if let Some(stack) = row.get(y) {
+                if let Some(tile) = stack.get(z) {
+                    return *tile;
+                }
+            }
+        }
+        None
+    }
 }
 
 pub struct GridGravity;

@@ -9,6 +9,7 @@ fern = { version = "0.5", features = ["colored"] }
 ggez = { git = "https://github.com/ggez/ggez.git", rev = "c90722af02c47d384691783ba8e185a97fa88840"}
 log = "0.4"
 nalgebra = "0.15"
+noise = "0.5"
 rand = "0.5"
 ron = "0.3"
 serde = "1.0"
