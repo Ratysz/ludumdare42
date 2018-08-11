@@ -1,6 +1,6 @@
 use super::*;
 use std::cmp::{Ord, Ordering};
-use std::collections::VecDeque;
+use std::collections::HashMap;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Position {
@@ -38,7 +38,7 @@ impl PartialOrd for Position {
 
 pub struct Grid {
     dimensions: (usize, usize, usize),
-    grid: VecDeque<VecDeque<VecDeque<Option<Index>>>>,
+    heightmap: HashMap<(usize, usize), usize>,
 }
 
 impl Default for Grid {
@@ -49,34 +49,17 @@ impl Default for Grid {
 
 impl Grid {
     pub fn new(width: usize, height: usize, depth: usize) -> Grid {
-        let mut grid = VecDeque::new();
-        for _ in 0..width {
-            grid.push_back({
-                let mut row = VecDeque::new();
-                for _ in 0..height {
-                    row.push_back({
-                        let mut stack = VecDeque::<Option<Index>>::new();
-                        for _ in 0..depth {
-                            stack.push_back(None);
-                        }
-                        stack
-                    });
-                }
-                row
-            });
-        }
         Grid {
             dimensions: (width, height, depth),
-            grid: VecDeque::new(),
+            heightmap: HashMap::new(),
         }
     }
 
     pub fn new_position(&mut self, entity: Entity, x: usize, y: usize, z: usize) -> Position {
-        if let Some(mut row) = self.grid.get_mut(x) {
-            if let Some(mut stack) = row.get_mut(y) {
-                if let Some(mut tile) = stack.get_mut(z) {
-                    *tile = Some(entity.id());
-                }
+        {
+            let height = self.heightmap.entry((x, y)).or_insert(z);
+            if *height < z {
+                *height = z;
             }
         }
         let (w, h, d) = self.dimensions();
@@ -92,15 +75,11 @@ impl Grid {
         self.dimensions
     }
 
-    pub fn entity_at(&self, x: usize, y: usize, z: usize) -> Option<Index> {
-        if let Some(row) = self.grid.get(x) {
-            if let Some(stack) = row.get(y) {
-                if let Some(tile) = stack.get(z) {
-                    return *tile;
-                }
-            }
+    pub fn is_top_tile(&self, pos: &Position) -> bool {
+        if let Some(height) = self.heightmap.get(&(pos.x(), pos.y())) {
+            return pos.z() == *height;
         }
-        None
+        false
     }
 }
 
@@ -109,5 +88,5 @@ pub struct GridGravity;
 impl<'a> System<'a> for GridGravity {
     type SystemData = (Write<'a, Grid>, WriteStorage<'a, Position>);
 
-    fn run(&mut self, (mut grid, positions): Self::SystemData) {}
+    fn run(&mut self, (grid, positions): Self::SystemData) {}
 }

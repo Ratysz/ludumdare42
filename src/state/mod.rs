@@ -54,12 +54,11 @@ pub trait State: Display {
         Ok(Transition::None)
     }
 
-    fn draw(
-        &mut self,
-        _ctx: &mut Context,
-        _world: &mut World,
-        _assets: &Assets,
-    ) -> GameResult<bool> {
-        Ok(false)
+    fn draw(&mut self, _ctx: &mut Context, _world: &mut World, _assets: &Assets) -> GameResult {
+        Ok(())
+    }
+
+    fn draw_underlying(&self) -> bool {
+        false
     }
 }

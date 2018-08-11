@@ -138,6 +138,7 @@ impl EventHandler for Game {
         };
         self.handle_transition(ctx, transition);
         self.world.maintain();
+        while timer::check_update_time(ctx, 60) {}
         Ok(())
     }
 
@@ -146,12 +147,20 @@ impl EventHandler for Game {
         self.world
             .write_resource::<Time>()
             .update_delta(timer::get_delta(ctx));
+        let mut draw_depth = 0;
+        while let Some(state) = self.state_stack.iter().next_back() {
+            draw_depth += 1;
+            if !state.draw_underlying() {
+                break;
+            }
+        }
         while let Some(state) = self.state_stack.iter_mut().next_back() {
-            match state.draw(ctx, &mut self.world, &self.assets) {
-                Ok(draw_underlying) => if !draw_underlying {
-                    break;
-                },
-                Err(e) => error!("State {} drawing error: {:?}", state, e),
+            if let Err(e) = state.draw(ctx, &mut self.world, &self.assets) {
+                error!("State {} drawing error: {:?}", state, e)
+            }
+            draw_depth -= 1;
+            if draw_depth == 0 {
+                break;
             }
         }
         graphics::present(ctx)?;
