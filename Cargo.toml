@@ -1,6 +1,30 @@
 [package]
-name = "ludumdare42"
+name = "its_not_cool"
 version = "0.1.0"
-authors = ["Ratys <ratysz@gmail.com>"]
+authors = ["Ratys <alexander.sepity@gmail.com>"]
 
 [dependencies]
+chrono = "0.4"
+fern = { version = "0.5", features = ["colored"] }
+ggez = { git = "https://github.com/ggez/ggez.git", rev = "c90722af02c47d384691783ba8e185a97fa88840"}
+log = "0.4"
+nalgebra = "0.15"
+rand = "0.5"
+ron = "0.3"
+serde = "1.0"
+serde_derive = "1.0"
+shred = "0.7"
+shred-derive = "0.5"
+specs = { version = "0.12", features = ["serde"] }
+specs-derive = "0.2"
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
