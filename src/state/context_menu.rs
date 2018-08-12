@@ -1,44 +1,34 @@
-use ggez::{
-    graphics::{self, Color, DrawParam},
-    Context, GameResult,
-};
-use specs::prelude::*;
-use std::fmt::{Display, Formatter, Result};
+use super::*;
+use nalgebra as na;
 
-use assets::{Assets, DrawableHandle};
-use ecs::*;
-use input::{Command, InputExtra};
-
-mod context_menu;
-mod game;
-mod main_menu;
-
-pub use self::context_menu::ContextMenu;
-pub use self::game::Game;
-pub use self::main_menu::MainMenu;
-
-pub enum Transition {
-    None,
-    Push(Box<State>),
-    Pop,
-    PopAll,
-    Replace(Box<State>),
+pub struct ContextMenu {
+    is_top: bool,
 }
 
-pub trait State: Display {
+impl ContextMenu {
+    pub fn new<'c>(world: &'c mut World, x: i32, y: i32) -> ContextMenu {
+        ContextMenu { is_top: false }
+    }
+}
+
+impl State for ContextMenu {
     fn start(&mut self, _ctx: &mut Context, _world: &mut World) -> GameResult {
+        self.is_top = true;
         Ok(())
     }
 
     fn stop(&mut self, _ctx: &mut Context, _world: &mut World) -> GameResult {
+        self.is_top = false;
         Ok(())
     }
 
     fn pause(&mut self, _ctx: &mut Context, _world: &mut World) -> GameResult {
+        self.is_top = false;
         Ok(())
     }
 
     fn resume(&mut self, _ctx: &mut Context, _world: &mut World) -> GameResult {
+        self.is_top = true;
         Ok(())
     }
 
@@ -49,11 +39,7 @@ pub trait State: Display {
         _command: Command,
         _extra: InputExtra,
     ) -> GameResult<Transition> {
-        Ok(Transition::None)
-    }
-
-    fn update(&mut self, _ctx: &mut Context, _world: &mut World) -> GameResult<Transition> {
-        Ok(Transition::None)
+        Ok(Transition::Pop)
     }
 
     fn draw(&mut self, _ctx: &mut Context, _world: &mut World, _assets: &Assets) -> GameResult {
@@ -61,6 +47,12 @@ pub trait State: Display {
     }
 
     fn draw_underlying(&self) -> bool {
-        false
+        true
+    }
+}
+
+impl Display for ContextMenu {
+    fn fmt(&self, f: &mut Formatter) -> Result {
+        write!(f, "ContextMenu")
     }
 }

@@ -1,4 +1,5 @@
 use ggez::event::{KeyCode, KeyMods, MouseButton};
+use ggez::input::keyboard;
 use ggez::Context;
 use std::collections::HashMap;
 
@@ -12,11 +13,13 @@ pub enum Input {
 pub enum InputExtra {
     None,
     RepeatedKey(bool),
-    XY(u32, u32),
+    XY(i32, i32),
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum Command {
+    Click,
+    ContextMenu,
     Quit,
 }
 
@@ -26,7 +29,24 @@ pub struct InputHandler {
 
 impl Default for InputHandler {
     fn default() -> InputHandler {
-        InputHandler::new()
+        let mut handler = InputHandler::new();
+        handler
+            .bind(
+                Input::Mouse(MouseButton::Left),
+                KeyMods::NONE,
+                Command::Click,
+            )
+            .bind(
+                Input::Mouse(MouseButton::Right),
+                KeyMods::NONE,
+                Command::ContextMenu,
+            )
+            .bind(
+                Input::Mouse(MouseButton::Left),
+                KeyMods::ALT,
+                Command::ContextMenu,
+            );
+        handler
     }
 }
 
@@ -78,12 +98,31 @@ impl InputHandler {
                             trace!("Quitting.");
                             ctx.quit();
                         }
-                        other => return Some((other, extra)),
+                        other => {
+                            trace!("Command: {:?} ({:?})", other, extra);
+                            return Some((other, extra));
+                        }
                     }
                 }
             }
         }
         None
+    }
+
+    pub fn mouse_button_up_event(
+        &mut self,
+        ctx: &mut Context,
+        button: MouseButton,
+        x: f32,
+        y: f32,
+    ) -> Option<(Command, InputExtra)> {
+        let mods = keyboard::get_active_mods(ctx);
+        self.resolve(
+            ctx,
+            Input::Mouse(button),
+            mods,
+            InputExtra::XY(x as i32, y as i32),
+        )
     }
 
     pub fn key_down_event(

@@ -43,7 +43,7 @@ pub struct Grid {
 
 impl Default for Grid {
     fn default() -> Grid {
-        Grid::new(8, 8, 8)
+        Grid::new(8, 8, 16)
     }
 }
 
@@ -88,5 +88,7 @@ pub struct GridGravity;
 impl<'a> System<'a> for GridGravity {
     type SystemData = (Write<'a, Grid>, WriteStorage<'a, Position>);
 
-    fn run(&mut self, (grid, positions): Self::SystemData) {}
+    fn run(&mut self, (grid, positions): Self::SystemData) {
+        debug!("hi");
+    }
 }

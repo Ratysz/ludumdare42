@@ -1,4 +1,4 @@
-use ggez::event::{EventHandler, KeyCode, KeyMods};
+use ggez::event::{EventHandler, KeyCode, KeyMods, MouseButton};
 use ggez::graphics::{self, Color};
 use ggez::timer;
 use ggez::{Context, GameResult};
@@ -148,24 +148,35 @@ impl EventHandler for Game {
             .write_resource::<Time>()
             .update_delta(timer::get_delta(ctx));
         let mut draw_depth = 0;
-        while let Some(state) = self.state_stack.iter().next_back() {
-            draw_depth += 1;
-            if !state.draw_underlying() {
-                break;
+        {
+            let mut iterator = self.state_stack.iter();
+            while let Some(state) = iterator.next_back() {
+                draw_depth += 1;
+                if !state.draw_underlying() {
+                    break;
+                }
             }
         }
-        while let Some(state) = self.state_stack.iter_mut().next_back() {
-            if let Err(e) = state.draw(ctx, &mut self.world, &self.assets) {
-                error!("State {} drawing error: {:?}", state, e)
-            }
-            draw_depth -= 1;
-            if draw_depth == 0 {
-                break;
+        {
+            let mut iterator = self.state_stack.iter_mut();
+            while let Some(state) = iterator.next_back() {
+                if let Err(e) = state.draw(ctx, &mut self.world, &self.assets) {
+                    error!("State {} drawing error: {:?}", state, e)
+                }
+                draw_depth -= 1;
+                if draw_depth == 0 {
+                    break;
+                }
             }
         }
         graphics::present(ctx)?;
         timer::yield_now();
         Ok(())
+    }
+
+    fn mouse_button_up_event(&mut self, ctx: &mut Context, button: MouseButton, x: f32, y: f32) {
+        let resolved = self.input.mouse_button_up_event(ctx, button, x, y);
+        self.propagate_input(ctx, resolved);
     }
 
     fn key_down_event(&mut self, ctx: &mut Context, key: KeyCode, mods: KeyMods, repeat: bool) {

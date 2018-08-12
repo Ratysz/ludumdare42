@@ -8,9 +8,8 @@ use assets::{Assets, DrawableHandle};
 pub fn draw_tooltip(
     ctx: &mut Context,
     assets: &Assets,
-    text: &str,
+    text: &Text,
     pos: na::Point2<f32>,
 ) -> GameResult {
-    graphics::draw(ctx, &Text::new(text), (pos, graphics::WHITE))?;
-    Ok(())
+    graphics::draw(ctx, text, (pos, graphics::WHITE))
 }

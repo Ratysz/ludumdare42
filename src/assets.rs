@@ -28,7 +28,7 @@ impl Assets {
         types.insert(DrawableHandle::Circle, DrawableType::Mesh);
         meshes.insert(
             DrawableHandle::Circle,
-            Mesh::new_circle(ctx, DrawMode::Fill, na::Point2::origin(), 5.0, 0.1)?,
+            Mesh::new_circle(ctx, DrawMode::Fill, na::Point2::origin(), 0.2, 0.1)?,
         );
 
         types.insert(DrawableHandle::Box, DrawableType::Mesh);
@@ -38,10 +38,10 @@ impl Assets {
                 ctx,
                 DrawMode::Fill,
                 &[
-                    na::Point2::new(-5.0, -5.0),
-                    na::Point2::new(5.0, -5.0),
-                    na::Point2::new(5.0, 5.0),
-                    na::Point2::new(-5.0, 5.0),
+                    na::Point2::new(-0.2, -0.2),
+                    na::Point2::new(0.2, -0.2),
+                    na::Point2::new(0.2, 0.2),
+                    na::Point2::new(-0.2, 0.2),
                 ],
             )?,
         );

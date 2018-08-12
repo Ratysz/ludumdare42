@@ -53,8 +53,19 @@ impl<'a, 'b> State for Game<'a, 'b> {
         Ok(())
     }
 
-    fn update(&mut self, _ctx: &mut Context, _world: &mut World) -> GameResult<Transition> {
-        self.logic.dispatch(&mut _world.res);
+    fn input(
+        &mut self,
+        _ctx: &mut Context,
+        _world: &mut World,
+        _command: Command,
+        _extra: InputExtra,
+    ) -> GameResult<Transition> {
+        match _command {
+            Command::ContextMenu => if let InputExtra::XY(x, y) = _extra {
+                return Ok(Transition::Push(Box::new(ContextMenu::new(_world, x, y))));
+            },
+            _ => self.logic.dispatch(&mut _world.res),
+        }
         Ok(Transition::None)
     }
 
