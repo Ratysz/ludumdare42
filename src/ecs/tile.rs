@@ -22,6 +22,8 @@ impl Tile {
         ctx: &mut Context,
         assets: &Assets,
         pos: &Position,
+        sealevel: usize,
+        depth: usize,
         is_top: bool,
     ) -> GameResult {
         match self {
@@ -30,7 +32,7 @@ impl Tile {
                 assets.fetch_drawable(DrawableHandle::Tile),
                 DrawParam::new()
                     .dest(map_pos_to_screen(pos))
-                    .color(map_pos_to_water_color(pos))
+                    .color(map_pos_to_water_color(pos.z(), sealevel, depth))
                     .scale(na::Vector2::new(TILE_SIZE.0, TILE_SIZE.1)),
             ),
             Tile::Terrain => graphics::draw(
@@ -38,7 +40,7 @@ impl Tile {
                 assets.fetch_drawable(DrawableHandle::Tile),
                 DrawParam::new()
                     .dest(map_pos_to_screen(pos))
-                    .color(map_pos_to_terrain_color(pos))
+                    .color(map_pos_to_terrain_color(pos.z(), sealevel, depth))
                     .scale(na::Vector2::new(TILE_SIZE.0, TILE_SIZE.1)),
             ),
             Tile::Trees => graphics::draw(
@@ -98,20 +100,34 @@ pub fn map_pos_to_screen(pos: &Position) -> na::Point2<f32> {
     )
 }
 
-fn map_pos_to_water_color(pos: &Position) -> Color {
+fn map_pos_to_water_color(z: usize, s: usize, d: usize) -> Color {
     Color::new(
         0.0,
-        0.2 * ((pos.z() as f32 + 1.0) / 4.0).min(1.0),
-        1.0 * ((pos.z() as f32 + 1.0) / 4.0).min(1.0),
-        0.5,
+        0.2 * ((0.5 * d as f32 + z as f32 - s as f32) / (0.5 * d as f32)).min(1.0),
+        0.8 * ((0.5 * d as f32 + z as f32 - s as f32) / (0.5 * d as f32)).min(1.0),
+        0.4,
     )
 }
 
-fn map_pos_to_terrain_color(pos: &Position) -> Color {
-    Color::new(
-        0.4 * ((pos.z() as f32 + 1.0) / 12.0).min(1.0),
-        0.8 * ((pos.z() as f32 + 1.0) / 12.0).min(1.0),
-        0.0,
-        1.0,
-    )
+fn map_pos_to_terrain_color(z: usize, s: usize, d: usize) -> Color {
+    let z = (z as f32 - s as f32) / d as f32;
+    if z < -0.05 {
+        Color::new(0.1, 0.05, 0.0, 1.0)
+    } else if z < 0.05 {
+        Color::new(0.8, 0.7, 0.1, 1.0)
+    } else if z > 0.25 {
+        Color::new(
+            (1.0 * z).min(1.0),
+            (0.5 * z).min(1.0),
+            (0.2 * z).min(1.0),
+            1.0,
+        )
+    } else {
+        Color::new(
+            (1.0 * (0.4 - z)).min(0.4),
+            (1.8 * (0.4 - z)).min(0.8),
+            0.0,
+            1.0,
+        )
+    }
 }

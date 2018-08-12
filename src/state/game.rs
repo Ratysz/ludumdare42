@@ -77,10 +77,12 @@ impl<'a, 'b> State for Game<'a, 'b> {
         let grid = _world.read_resource::<Grid>();
         let positions = _world.read_storage::<Position>();
         let tiles = _world.read_storage::<Tile>();
+        let sealevel = grid.current_sealevel;
+        let depth = grid.dimensions().2;
         let mut sorted = (&positions, &tiles).join().collect::<Vec<_>>();
         sorted.sort_by_key(|(&pos, _)| pos);
         for (pos, tile) in sorted.iter() {
-            tile.draw(_ctx, _assets, pos, grid.is_top_tile(pos))?;
+            tile.draw(_ctx, _assets, pos, sealevel, depth, grid.is_top_tile(pos))?;
         }
         if self.is_top {
             for (pos, tile) in (&positions, &tiles).join() {
