@@ -1,13 +1,16 @@
-use ggez::graphics::{self, DrawMode, Drawable, Mesh, MeshBuilder};
+use super::ecs::TILE_SIZE;
+use ggez::graphics::{self, Color, DrawMode, Drawable, Mesh, MeshBuilder};
 use ggez::{Context, GameResult};
 use nalgebra as na;
+use rand;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 pub enum DrawableHandle {
     Circle,
     Box,
-    FullTile,
+    Tile,
+    TileSelector,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
@@ -46,9 +49,9 @@ impl Assets {
             )?,
         );
 
-        types.insert(DrawableHandle::FullTile, DrawableType::Mesh);
+        types.insert(DrawableHandle::Tile, DrawableType::Mesh);
         meshes.insert(
-            DrawableHandle::FullTile,
+            DrawableHandle::Tile,
             Mesh::new_polygon(
                 ctx,
                 DrawMode::Fill,
@@ -63,6 +66,28 @@ impl Assets {
             )?,
         );
 
+        types.insert(DrawableHandle::TileSelector, DrawableType::Mesh);
+        meshes.insert(
+            DrawableHandle::TileSelector,
+            Mesh::new_polyline(
+                ctx,
+                DrawMode::Line(1.0),
+                &[
+                    na::Point2::new(-1.0 * TILE_SIZE.0, 0.0 * TILE_SIZE.1),
+                    na::Point2::new(0.0 * TILE_SIZE.0, -0.5 * TILE_SIZE.1),
+                    na::Point2::new(1.0 * TILE_SIZE.0, 0.0 * TILE_SIZE.1),
+                    na::Point2::new(0.0 * TILE_SIZE.0, 0.5 * TILE_SIZE.1),
+                    na::Point2::new(-1.0 * TILE_SIZE.0, 0.0 * TILE_SIZE.1),
+                    na::Point2::new(-1.0 * TILE_SIZE.0, 0.25 * TILE_SIZE.1),
+                    na::Point2::new(0.0 * TILE_SIZE.0, 0.75 * TILE_SIZE.1),
+                    na::Point2::new(0.0 * TILE_SIZE.0, 0.5 * TILE_SIZE.1),
+                    na::Point2::new(0.0 * TILE_SIZE.0, 0.75 * TILE_SIZE.1),
+                    na::Point2::new(1.0 * TILE_SIZE.0, 0.25 * TILE_SIZE.1),
+                    na::Point2::new(1.0 * TILE_SIZE.0, 0.0 * TILE_SIZE.1),
+                ],
+            )?,
+        );
+
         Ok(Assets { types, meshes })
     }
 
@@ -71,4 +96,13 @@ impl Assets {
             DrawableType::Mesh => self.meshes.get(&handle).unwrap(),
         }
     }
+}
+
+pub fn random_color() -> Color {
+    Color::new(
+        rand::random::<f32>(),
+        rand::random::<f32>(),
+        rand::random::<f32>(),
+        1.0,
+    )
 }

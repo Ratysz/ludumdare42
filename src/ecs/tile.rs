@@ -4,7 +4,7 @@ use ggez::input::mouse;
 use ggez::{Context, GameResult};
 use nalgebra as na;
 
-use assets::{Assets, DrawableHandle};
+use assets::{random_color, Assets, DrawableHandle};
 use gui;
 
 pub const TILE_SIZE: (f32, f32) = (30.0, 30.0);
@@ -17,11 +17,17 @@ pub enum Tile {
 }
 
 impl Tile {
-    pub fn draw(&self, ctx: &mut Context, assets: &Assets, pos: &Position) -> GameResult {
+    pub fn draw(
+        &self,
+        ctx: &mut Context,
+        assets: &Assets,
+        pos: &Position,
+        is_top: bool,
+    ) -> GameResult {
         match self {
             Tile::Water => graphics::draw(
                 ctx,
-                assets.fetch_drawable(DrawableHandle::FullTile),
+                assets.fetch_drawable(DrawableHandle::Tile),
                 DrawParam::new()
                     .dest(map_pos_to_screen(pos))
                     .color(map_pos_to_water_color(pos))
@@ -29,7 +35,7 @@ impl Tile {
             ),
             Tile::Terrain => graphics::draw(
                 ctx,
-                assets.fetch_drawable(DrawableHandle::FullTile),
+                assets.fetch_drawable(DrawableHandle::Tile),
                 DrawParam::new()
                     .dest(map_pos_to_screen(pos))
                     .color(map_pos_to_terrain_color(pos))
@@ -54,6 +60,12 @@ impl Tile {
     ) -> GameResult<bool> {
         let pos = map_pos_to_screen(pos);
         if hit_test(ctx, pos) {
+            graphics::draw(
+                ctx,
+                assets.fetch_drawable(DrawableHandle::TileSelector),
+                DrawParam::new().dest(pos).color(random_color()),
+            )?;
+            let pos = pos - na::Vector2::new(0.0, TILE_SIZE.1);
             match self {
                 Tile::Water => {
                     gui::draw_tooltip(ctx, assets, &Text::new("Water"), pos)?;
