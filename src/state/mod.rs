@@ -1,11 +1,11 @@
 use ggez::{
-    graphics::{self, Color, DrawParam},
+    graphics::{self, Align, Color, DrawParam, Scale, Text, TextFragment},
     Context, GameResult,
 };
 use specs::prelude::*;
 use std::fmt::{Display, Formatter, Result};
 
-use assets::{Assets, DrawableHandle};
+use assets::{random_color, Assets, DrawableHandle};
 use ecs::*;
 use input::{Command, InputExtra};
 

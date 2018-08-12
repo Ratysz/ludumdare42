@@ -37,6 +37,7 @@ impl PartialOrd for Position {
 }
 
 pub struct Grid {
+    pub current_sealevel: usize,
     dimensions: (usize, usize, usize),
     heightmap: HashMap<(usize, usize), usize>,
 }
@@ -50,6 +51,7 @@ impl Default for Grid {
 impl Grid {
     pub fn new(width: usize, height: usize, depth: usize) -> Grid {
         Grid {
+            current_sealevel: 0,
             dimensions: (width, height, depth),
             heightmap: HashMap::new(),
         }

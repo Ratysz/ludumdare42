@@ -11,9 +11,6 @@ extern crate ron;
 extern crate serde;
 #[macro_use]
 extern crate serde_derive;
-extern crate shred;
-#[macro_use]
-extern crate shred_derive;
 extern crate specs;
 #[macro_use]
 extern crate specs_derive;

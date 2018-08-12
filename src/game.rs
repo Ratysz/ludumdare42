@@ -158,8 +158,9 @@ impl EventHandler for Game {
             }
         }
         {
-            let mut iterator = self.state_stack.iter_mut();
-            while let Some(state) = iterator.next_back() {
+            let length = self.state_stack.len();
+            let mut iterator = self.state_stack.iter_mut().skip(length - draw_depth);
+            while let Some(state) = iterator.next() {
                 if let Err(e) = state.draw(ctx, &mut self.world, &self.assets) {
                     error!("State {} drawing error: {:?}", state, e)
                 }

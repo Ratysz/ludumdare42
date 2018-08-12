@@ -66,17 +66,16 @@ impl Tile {
                 DrawParam::new().dest(pos).color(random_color()),
             )?;
             let pos = pos - na::Vector2::new(0.0, TILE_SIZE.1);
-            match self {
-                Tile::Water => {
-                    gui::draw_tooltip(ctx, assets, &Text::new("Water"), pos)?;
-                }
-                Tile::Terrain => {
-                    gui::draw_tooltip(ctx, assets, &Text::new("Terrain"), pos)?;
-                }
-                Tile::Trees => {
-                    gui::draw_tooltip(ctx, assets, &Text::new("Trees"), pos)?;
-                }
-            }
+            gui::draw_tooltip(
+                ctx,
+                assets,
+                &Text::new(match self {
+                    Tile::Water => "Water",
+                    Tile::Terrain => "Terrain",
+                    Tile::Trees => "Trees",
+                }),
+                pos,
+            )?;
             Ok(true)
         } else {
             Ok(false)

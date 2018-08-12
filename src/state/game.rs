@@ -13,14 +13,15 @@ impl<'a, 'b> Game<'a, 'b> {
 
         let mut logic = DispatcherBuilder::new()
             .with(grid::GridGravity, "grid_gravity", &[])
+            .with(mapgen::Flood, "flood", &[])
             .build();
         logic.setup(&mut world.res);
 
         let mut animation = DispatcherBuilder::new().build();
         animation.setup(&mut world.res);
 
-        let mut grid_populator = mapgen::PopulateGrid;
-        <mapgen::PopulateGrid as System>::setup(&mut grid_populator, &mut world.res);
+        let mut grid_populator = mapgen::GenerateMap;
+        <mapgen::GenerateMap as System>::setup(&mut grid_populator, &mut world.res);
         grid_populator.run_now(&mut world.res);
         world.maintain();
 
@@ -62,7 +63,7 @@ impl<'a, 'b> State for Game<'a, 'b> {
     ) -> GameResult<Transition> {
         match _command {
             Command::ContextMenu => if let InputExtra::XY(x, y) = _extra {
-                if let Some(menu) = ContextMenu::new(_ctx, _world, x, y) {
+                if let Some(menu) = ContextMenu::new(_ctx, _world) {
                     return Ok(Transition::Push(Box::new(menu)));
                 }
             },

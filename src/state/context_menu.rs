@@ -1,16 +1,18 @@
 use super::*;
 use nalgebra as na;
 use specs::world::Index;
+use std::f32::INFINITY;
 
 pub struct ContextMenu {
     is_top: bool,
+    text: Text,
     target_id: Index,
     target_tile: Tile,
     target_pos: Position,
 }
 
 impl ContextMenu {
-    pub fn new<'c>(ctx: &Context, world: &'c mut World, x: i32, y: i32) -> Option<ContextMenu> {
+    pub fn new<'c>(ctx: &Context, world: &'c mut World) -> Option<ContextMenu> {
         let grid = world.read_resource::<Grid>();
         let entities = world.entities();
         let positions = world.read_storage::<Position>();
@@ -18,8 +20,15 @@ impl ContextMenu {
         for (entity, pos, tile) in (&*entities, &positions, &tiles).join() {
             if grid.is_top_tile(pos) && tile::hit_test(ctx, tile::map_pos_to_screen(pos)) {
                 debug!("Target: {:?} at {:?} ({:?})", tile, pos, entity);
+                let mut text = Text::new(
+                    TextFragment::new("I'm a context menu!\n").scale(Scale::uniform(20.0)),
+                );
+                text.add(format!("This is {:?}\n", tile))
+                    .add(format!("Height is {}\n", pos.z()))
+                    .add(format!("X {} Y {}\n", pos.x(), pos.y()));
                 return Some(ContextMenu {
                     is_top: false,
+                    text,
                     target_id: entity.id(),
                     target_tile: *tile,
                     target_pos: *pos,
@@ -62,6 +71,14 @@ impl State for ContextMenu {
     }
 
     fn draw(&mut self, _ctx: &mut Context, _world: &mut World, _assets: &Assets) -> GameResult {
+        let pos = tile::map_pos_to_screen(&self.target_pos);
+        graphics::draw(
+            _ctx,
+            _assets.fetch_drawable(DrawableHandle::TileSelector),
+            DrawParam::new().dest(pos).color(random_color()),
+        )?;
+        //let pos = pos - na::Vector2::new(0.0, TILE_SIZE.1);
+        graphics::draw(_ctx, &self.text, (pos, graphics::WHITE));
         Ok(())
     }
 
