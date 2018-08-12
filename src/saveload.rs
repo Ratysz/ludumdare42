@@ -6,11 +6,13 @@ use specs::saveload::{DeserializeComponents, SerializeComponents, U64Marker, U64
 use std::fs::File;
 
 pub fn save(world: &mut World) {
-    SaveWorld(format!("{}/save", env!("CARGO_MANIFEST_DIR"))).run_now(&world.res);
+    //SaveWorld(format!("{}/save", env!("CARGO_MANIFEST_DIR"))).run_now(&world.res);
+    SaveWorld("./save".to_owned()).run_now(&world.res);
 }
 
 pub fn load(world: &mut World) {
-    LoadWorld(format!("{}/save", env!("CARGO_MANIFEST_DIR"))).run_now(&world.res);
+    //LoadWorld(format!("{}/save", env!("CARGO_MANIFEST_DIR"))).run_now(&world.res);
+    SaveWorld("./save".to_owned()).run_now(&world.res);
 }
 
 struct SaveWorld(String);

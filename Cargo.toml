@@ -6,7 +6,9 @@ authors = ["Ratys <alexander.sepity@gmail.com>"]
 [dependencies]
 chrono = "0.4"
 fern = { version = "0.5", features = ["colored"] }
-ggez = { git = "https://github.com/ggez/ggez.git", rev = "c90722af02c47d384691783ba8e185a97fa88840"}
+#ggez = { git = "https://github.com/ggez/ggez.git", rev = "c90722af02c47d384691783ba8e185a97fa88840"}
+#ggez = { path = "../ggez" }
+ggez = { git = "https://github.com/Ratysz/ggez.git", rev = "00a469d1f2b39aab215543ccf38c829509afa4c9"}
 log = "0.4"
 nalgebra = "0.15"
 noise = "0.5"

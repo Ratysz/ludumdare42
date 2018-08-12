@@ -53,8 +53,10 @@ impl Tile {
     ) -> GameResult<bool> {
         let mouse = mouse::get_position(ctx);
         let pos = map_pos_to_screen(pos);
-        if (mouse.x - pos.x).abs() < 1.0 * TILE_SIZE_PX.0
-            && (mouse.y - pos.y).abs() < 0.5 * TILE_SIZE_PX.1
+        let (x, y) = ((mouse.x - pos.x).abs(), (mouse.y - pos.y).abs());
+        if x < TILE_SIZE_PX.0
+            && y < 0.5 * TILE_SIZE_PX.1
+            && x / TILE_SIZE_PX.0 + 0.5 * y / TILE_SIZE_PX.1 < 1.0
         {
             match self {
                 Tile::Water => {
