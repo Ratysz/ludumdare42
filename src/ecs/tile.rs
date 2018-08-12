@@ -52,11 +52,8 @@ impl Tile {
         assets: &Assets,
         pos: &Position,
     ) -> GameResult<bool> {
-        let mouse = mouse::get_position(ctx);
         let pos = map_pos_to_screen(pos);
-        let (x, y) = ((mouse.x - pos.x).abs(), (mouse.y - pos.y).abs());
-        if x < TILE_SIZE.0 && y < 0.5 * TILE_SIZE.1 && x / TILE_SIZE.0 + 0.5 * y / TILE_SIZE.1 < 1.0
-        {
+        if hit_test(ctx, pos) {
             match self {
                 Tile::Water => {
                     gui::draw_tooltip(ctx, assets, &Text::new("Water"), pos)?;
@@ -73,6 +70,12 @@ impl Tile {
             Ok(false)
         }
     }
+}
+
+pub fn hit_test(ctx: &Context, pos: na::Point2<f32>) -> bool {
+    let mouse = mouse::get_position(ctx);
+    let (x, y) = ((mouse.x - pos.x).abs(), (mouse.y - pos.y).abs());
+    x < TILE_SIZE.0 && y < 0.5 * TILE_SIZE.1 && x / TILE_SIZE.0 + 0.5 * y / TILE_SIZE.1 < 1.0
 }
 
 pub fn map_pos_to_screen(pos: &Position) -> na::Point2<f32> {

@@ -1,13 +1,32 @@
 use super::*;
 use nalgebra as na;
+use specs::world::Index;
 
 pub struct ContextMenu {
     is_top: bool,
+    target_id: Index,
+    target_tile: Tile,
+    target_pos: Position,
 }
 
 impl ContextMenu {
-    pub fn new<'c>(world: &'c mut World, x: i32, y: i32) -> ContextMenu {
-        ContextMenu { is_top: false }
+    pub fn new<'c>(ctx: &Context, world: &'c mut World, x: i32, y: i32) -> Option<ContextMenu> {
+        let grid = world.read_resource::<Grid>();
+        let entities = world.entities();
+        let positions = world.read_storage::<Position>();
+        let tiles = world.read_storage::<Tile>();
+        for (entity, pos, tile) in (&*entities, &positions, &tiles).join() {
+            if grid.is_top_tile(pos) && tile::hit_test(ctx, tile::map_pos_to_screen(pos)) {
+                debug!("Target: {:?} at {:?} ({:?})", tile, pos, entity);
+                return Some(ContextMenu {
+                    is_top: false,
+                    target_id: entity.id(),
+                    target_tile: *tile,
+                    target_pos: *pos,
+                });
+            }
+        }
+        None
     }
 }
 

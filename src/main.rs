@@ -69,6 +69,7 @@ fn main() {
                 ))
             })
             .level_for("gfx_device_gl", log::LevelFilter::Warn)
+            .level_for("ggez", log::LevelFilter::Debug)
             .level(log::LevelFilter::Trace)
             .chain(std::io::stdout())
             .apply()
