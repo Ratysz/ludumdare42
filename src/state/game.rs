@@ -42,22 +42,37 @@ impl<'a, 'b> Game<'a, 'b> {
 }
 
 impl<'a, 'b> State for Game<'a, 'b> {
-    fn start(&mut self, _ctx: &mut Context, _world: &mut World) -> GameResult {
+    fn start(
+        &mut self,
+        _ctx: &mut Context,
+        _assets: &mut Assets,
+        _world: &mut World,
+    ) -> GameResult {
         self.is_top = true;
         Ok(())
     }
 
-    fn stop(&mut self, _ctx: &mut Context, _world: &mut World) -> GameResult {
+    fn stop(&mut self, _ctx: &mut Context, _assets: &mut Assets, _world: &mut World) -> GameResult {
         self.is_top = false;
         Ok(())
     }
 
-    fn pause(&mut self, _ctx: &mut Context, _world: &mut World) -> GameResult {
+    fn pause(
+        &mut self,
+        _ctx: &mut Context,
+        _assets: &mut Assets,
+        _world: &mut World,
+    ) -> GameResult {
         self.is_top = false;
         Ok(())
     }
 
-    fn resume(&mut self, _ctx: &mut Context, _world: &mut World) -> GameResult {
+    fn resume(
+        &mut self,
+        _ctx: &mut Context,
+        _assets: &mut Assets,
+        _world: &mut World,
+    ) -> GameResult {
         self.is_top = true;
         Ok(())
     }
@@ -65,6 +80,7 @@ impl<'a, 'b> State for Game<'a, 'b> {
     fn input(
         &mut self,
         _ctx: &mut Context,
+        _assets: &mut Assets,
         _world: &mut World,
         _command: Command,
         _extra: InputExtra,
@@ -80,7 +96,7 @@ impl<'a, 'b> State for Game<'a, 'b> {
         Ok(Transition::None)
     }
 
-    fn draw(&mut self, _ctx: &mut Context, _world: &mut World, _assets: &Assets) -> GameResult {
+    fn draw(&mut self, _ctx: &mut Context, _assets: &mut Assets, _world: &mut World) -> GameResult {
         self.animation.dispatch(&mut _world.res);
         let grid = _world.read_resource::<Grid>();
         let positions = _world.read_storage::<Position>();

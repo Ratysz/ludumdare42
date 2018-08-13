@@ -1,7 +1,6 @@
 use super::*;
 use nalgebra as na;
 use specs::world::Index;
-use std::collections::HashMap;
 use std::f32::INFINITY;
 
 pub struct ContextMenu {
@@ -10,7 +9,7 @@ pub struct ContextMenu {
     target_tile: Tile,
     target_pos: Position,
     enabled: bool,
-    options: Vec<(na::Vector2<f32>, (DrawableHandle, bool))>,
+    options: Vec<(na::Vector2<f32>, (SpriteHandle, bool))>,
 }
 
 impl ContextMenu {
@@ -25,32 +24,32 @@ impl ContextMenu {
                 let civ = grid.is_civilizable(pos.x(), pos.y());
                 let options = vec![
                     (
-                        na::Vector2::new(-3.0 * TILE_SIZE.0, 0.5 * TILE_SIZE.0),
-                        (DrawableHandle::Housing, civ),
+                        na::Vector2::new(-3.3 * TILE_SIZE.0, 0.5 * TILE_SIZE.0),
+                        (SpriteHandle::Housing, civ),
                     ),
                     (
-                        na::Vector2::new(-1.0 * TILE_SIZE.0, 0.5 * TILE_SIZE.0),
-                        (DrawableHandle::Powerplant, civ),
+                        na::Vector2::new(-1.1 * TILE_SIZE.0, 0.5 * TILE_SIZE.0),
+                        (SpriteHandle::Powerplant, civ),
                     ),
                     (
-                        na::Vector2::new(1.0 * TILE_SIZE.0, 0.5 * TILE_SIZE.0),
-                        (DrawableHandle::Fishery, civ),
+                        na::Vector2::new(1.1 * TILE_SIZE.0, 0.5 * TILE_SIZE.0),
+                        (SpriteHandle::Fishery, civ),
                     ),
                     (
-                        na::Vector2::new(3.0 * TILE_SIZE.0, 0.5 * TILE_SIZE.0),
-                        (DrawableHandle::Farm, civ),
+                        na::Vector2::new(3.3 * TILE_SIZE.0, 0.5 * TILE_SIZE.0),
+                        (SpriteHandle::Farm, civ),
                     ),
                     (
-                        na::Vector2::new(-2.0 * TILE_SIZE.0, 1.0 * TILE_SIZE.0),
-                        (DrawableHandle::Sanctuary, civ),
+                        na::Vector2::new(-2.2 * TILE_SIZE.0, 1.5 * TILE_SIZE.0),
+                        (SpriteHandle::Sanctuary, civ),
                     ),
                     (
-                        na::Vector2::new(0.0 * TILE_SIZE.0, 1.0 * TILE_SIZE.0),
-                        (DrawableHandle::Terraform, civ),
+                        na::Vector2::new(0.0 * TILE_SIZE.0, 1.5 * TILE_SIZE.0),
+                        (SpriteHandle::Terraform, civ),
                     ),
                     (
-                        na::Vector2::new(2.0 * TILE_SIZE.0, 1.0 * TILE_SIZE.0),
-                        (DrawableHandle::Renewables, civ),
+                        na::Vector2::new(2.2 * TILE_SIZE.0, 1.5 * TILE_SIZE.0),
+                        (SpriteHandle::Renewables, civ),
                     ),
                 ];
                 return Some(ContextMenu {
@@ -68,22 +67,37 @@ impl ContextMenu {
 }
 
 impl State for ContextMenu {
-    fn start(&mut self, _ctx: &mut Context, _world: &mut World) -> GameResult {
+    fn start(
+        &mut self,
+        _ctx: &mut Context,
+        _assets: &mut Assets,
+        _world: &mut World,
+    ) -> GameResult {
         self.is_top = true;
         Ok(())
     }
 
-    fn stop(&mut self, _ctx: &mut Context, _world: &mut World) -> GameResult {
+    fn stop(&mut self, _ctx: &mut Context, _assets: &mut Assets, _world: &mut World) -> GameResult {
         self.is_top = false;
         Ok(())
     }
 
-    fn pause(&mut self, _ctx: &mut Context, _world: &mut World) -> GameResult {
+    fn pause(
+        &mut self,
+        _ctx: &mut Context,
+        _assets: &mut Assets,
+        _world: &mut World,
+    ) -> GameResult {
         self.is_top = false;
         Ok(())
     }
 
-    fn resume(&mut self, _ctx: &mut Context, _world: &mut World) -> GameResult {
+    fn resume(
+        &mut self,
+        _ctx: &mut Context,
+        _assets: &mut Assets,
+        _world: &mut World,
+    ) -> GameResult {
         self.is_top = true;
         Ok(())
     }
@@ -91,6 +105,7 @@ impl State for ContextMenu {
     fn input(
         &mut self,
         _ctx: &mut Context,
+        _assets: &mut Assets,
         _world: &mut World,
         _command: Command,
         _extra: InputExtra,
@@ -98,11 +113,11 @@ impl State for ContextMenu {
         Ok(Transition::Pop)
     }
 
-    fn draw(&mut self, _ctx: &mut Context, _world: &mut World, _assets: &Assets) -> GameResult {
+    fn draw(&mut self, _ctx: &mut Context, _assets: &mut Assets, _world: &mut World) -> GameResult {
         let pos = tile::map_pos_to_screen(&self.target_pos);
         graphics::draw(
             _ctx,
-            _assets.fetch_mesh(DrawableHandle::TileSelector),
+            _assets.fetch_mesh(MeshHandle::TileSelector),
             DrawParam::new().dest(pos).color(graphics::BLACK),
         )?;
         let mut i = 0;
@@ -110,24 +125,22 @@ impl State for ContextMenu {
         for (vec, (drawable, enabled)) in &self.options {
             graphics::draw(
                 _ctx,
-                _assets.fetch_mesh(DrawableHandle::Tile),
+                _assets.fetch_mesh(MeshHandle::Tile),
                 DrawParam::new()
-                    .dest(pos + vec)
-                    .color(Color::new(0.0, 0.0, 0.0, 0.8))
+                    .dest(pos + vec + na::Vector2::new(0.0, 0.25 * TILE_SIZE.1))
+                    .color(Color::new(0.0, 0.0, 0.0, 0.95))
                     .scale(na::Vector2::new(TILE_SIZE.0, TILE_SIZE.1)),
             )?;
             graphics::draw(
                 _ctx,
-                _assets.fetch_mesh(*drawable),
+                _assets.fetch_sprite(*drawable),
                 DrawParam::new()
-                    .dest(pos + vec)
-                    .color(graphics::WHITE)
-                    .scale(na::Vector2::new(TILE_SIZE.0, TILE_SIZE.1)),
-            );
+                    .dest(pos + vec + na::Vector2::new(-TILE_SIZE.0, -0.5 * TILE_SIZE.1)),
+            )?;
             if self.enabled && !tooltip_drawn && tile::hit_test(_ctx, pos + vec) {
                 graphics::draw(
                     _ctx,
-                    _assets.fetch_mesh(DrawableHandle::TileSelector),
+                    _assets.fetch_mesh(MeshHandle::TileSelector),
                     DrawParam::new().dest(pos + vec).color(random_color()),
                 )?;
                 tooltip_drawn = true;
@@ -185,15 +198,15 @@ impl State for ContextMenu {
                     _ctx,
                     graphics::DrawMode::Fill,
                     graphics::Rect::new(0.0, 0.0, dim.0 as f32, dim.1 as f32),
-                ).unwrap();
+                )?;
                 graphics::draw(
                     _ctx,
                     &rect,
                     DrawParam::new()
                         .dest(pos - vec)
                         .color(Color::new(0.0, 0.0, 0.0, 0.6)),
-                );
-                graphics::draw(_ctx, &text, DrawParam::new().dest(pos - vec));
+                )?;
+                graphics::draw(_ctx, &text, DrawParam::new().dest(pos - vec))?;
             }
             i += 1;
         }
@@ -205,15 +218,15 @@ impl State for ContextMenu {
                 _ctx,
                 graphics::DrawMode::Fill,
                 graphics::Rect::new(0.0, 0.0, dim.0 as f32, dim.1 as f32),
-            ).unwrap();
+            )?;
             graphics::draw(
                 _ctx,
                 &rect,
                 DrawParam::new()
                     .dest(pos - vec)
                     .color(Color::new(0.0, 0.0, 0.0, 0.6)),
-            );
-            graphics::draw(_ctx, &text, DrawParam::new().dest(pos - vec));
+            )?;
+            graphics::draw(_ctx, &text, DrawParam::new().dest(pos - vec))?;
         }
         /*let mut text = Text::new(format!("This is {:?}\n", tile));
         text.add(format!(

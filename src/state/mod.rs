@@ -5,7 +5,7 @@ use ggez::{
 use specs::prelude::*;
 use std::fmt::{Display, Formatter, Result};
 
-use assets::{random_color, Assets, DrawableHandle};
+use assets::{random_color, Assets, MeshHandle, SoundHandle, SpriteHandle};
 use ecs::*;
 use input::{Command, InputExtra};
 
@@ -26,25 +26,41 @@ pub enum Transition {
 }
 
 pub trait State: Display {
-    fn start(&mut self, _ctx: &mut Context, _world: &mut World) -> GameResult {
+    fn start(
+        &mut self,
+        _ctx: &mut Context,
+        _assets: &mut Assets,
+        _world: &mut World,
+    ) -> GameResult {
         Ok(())
     }
 
-    fn stop(&mut self, _ctx: &mut Context, _world: &mut World) -> GameResult {
+    fn stop(&mut self, _ctx: &mut Context, _assets: &mut Assets, _world: &mut World) -> GameResult {
         Ok(())
     }
 
-    fn pause(&mut self, _ctx: &mut Context, _world: &mut World) -> GameResult {
+    fn pause(
+        &mut self,
+        _ctx: &mut Context,
+        _assets: &mut Assets,
+        _world: &mut World,
+    ) -> GameResult {
         Ok(())
     }
 
-    fn resume(&mut self, _ctx: &mut Context, _world: &mut World) -> GameResult {
+    fn resume(
+        &mut self,
+        _ctx: &mut Context,
+        _assets: &mut Assets,
+        _world: &mut World,
+    ) -> GameResult {
         Ok(())
     }
 
     fn input(
         &mut self,
         _ctx: &mut Context,
+        _assets: &mut Assets,
         _world: &mut World,
         _command: Command,
         _extra: InputExtra,
@@ -52,11 +68,16 @@ pub trait State: Display {
         Ok(Transition::None)
     }
 
-    fn update(&mut self, _ctx: &mut Context, _world: &mut World) -> GameResult<Transition> {
+    fn update(
+        &mut self,
+        _ctx: &mut Context,
+        _assets: &mut Assets,
+        _world: &mut World,
+    ) -> GameResult<Transition> {
         Ok(Transition::None)
     }
 
-    fn draw(&mut self, _ctx: &mut Context, _world: &mut World, _assets: &Assets) -> GameResult {
+    fn draw(&mut self, _ctx: &mut Context, _assets: &mut Assets, _world: &mut World) -> GameResult {
         Ok(())
     }
 

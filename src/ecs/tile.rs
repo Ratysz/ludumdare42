@@ -4,7 +4,7 @@ use ggez::input::mouse;
 use ggez::{Context, GameResult};
 use nalgebra as na;
 
-use assets::{random_color, Assets, DrawableHandle};
+use assets::{random_color, Assets, MeshHandle, SpriteHandle};
 
 pub const TILE_SIZE: (f32, f32) = (32.0, 32.0);
 
@@ -39,7 +39,7 @@ impl Tile {
         match self {
             Tile::Water => graphics::draw(
                 ctx,
-                assets.fetch_mesh(DrawableHandle::Tile),
+                assets.fetch_mesh(MeshHandle::Tile),
                 DrawParam::new()
                     .dest(map_pos_to_screen(pos))
                     .color(map_pos_to_water_color(pos.z(), sealevel, depth))
@@ -47,69 +47,73 @@ impl Tile {
             ),
             Tile::Terrain => graphics::draw(
                 ctx,
-                assets.fetch_mesh(DrawableHandle::Tile),
-                DrawParam::new()
-                    .dest(map_pos_to_screen(pos))
-                    .color(map_pos_to_terrain_color(pos.z(), sealevel, depth))
-                    .scale(na::Vector2::new(TILE_SIZE.0, TILE_SIZE.1)),
-            ),
-            Tile::Trees => graphics::draw(
-                ctx,
-                assets.fetch_sprite(DrawableHandle::Trees),
+                assets.fetch_sprite(SpriteHandle::TileSprite),
                 DrawParam::new()
                     .dest(
                         map_pos_to_screen(pos) + na::Vector2::new(-TILE_SIZE.0, -0.5 * TILE_SIZE.1),
                     )
-                    .color(Color::new(0.1, 0.6, 0.2, 1.0)),
+                    .color(map_pos_to_terrain_color(pos.z(), sealevel, depth)),
+            ),
+            Tile::Trees => graphics::draw(
+                ctx,
+                assets.fetch_sprite(SpriteHandle::Trees),
+                DrawParam::new()
+                    .dest(
+                        map_pos_to_screen(pos) + na::Vector2::new(-TILE_SIZE.0, -0.5 * TILE_SIZE.1),
+                    )
+                    .color(Color::new(0.3, 0.8, 0.3, 1.0)),
             ),
             Tile::Structure(structure) => match structure {
                 Structure::Housing => graphics::draw(
                     ctx,
-                    assets.fetch_mesh(DrawableHandle::Circle),
+                    assets.fetch_sprite(SpriteHandle::Housing),
                     DrawParam::new()
-                        .dest(map_pos_to_screen(pos))
-                        .color(Color::new(1.0, 0.0, 0.0, 1.0))
-                        .scale(na::Vector2::new(TILE_SIZE.0, TILE_SIZE.1)),
+                        .dest(
+                            map_pos_to_screen(pos)
+                                + na::Vector2::new(-TILE_SIZE.0, -0.5 * TILE_SIZE.1),
+                        )
+                        .color(Color::new(0.7, 0.7, 0.9, 1.0)),
                 ),
                 Structure::Sanctuary => graphics::draw(
                     ctx,
-                    assets.fetch_mesh(DrawableHandle::Circle),
-                    DrawParam::new()
-                        .dest(map_pos_to_screen(pos))
-                        .color(Color::new(0.0, 1.0, 0.0, 1.0))
-                        .scale(na::Vector2::new(TILE_SIZE.0, TILE_SIZE.1)),
+                    assets.fetch_sprite(SpriteHandle::Sanctuary),
+                    DrawParam::new().dest(
+                        map_pos_to_screen(pos) + na::Vector2::new(-TILE_SIZE.0, -0.5 * TILE_SIZE.1),
+                    ),
                 ),
                 Structure::Powerplant => graphics::draw(
                     ctx,
-                    assets.fetch_mesh(DrawableHandle::Circle),
+                    assets.fetch_sprite(SpriteHandle::Powerplant),
                     DrawParam::new()
-                        .dest(map_pos_to_screen(pos))
-                        .color(Color::new(0.0, 0.0, 0.0, 1.0))
-                        .scale(na::Vector2::new(TILE_SIZE.0, TILE_SIZE.1)),
+                        .dest(
+                            map_pos_to_screen(pos)
+                                + na::Vector2::new(-TILE_SIZE.0, -0.5 * TILE_SIZE.1),
+                        )
+                        .color(Color::new(0.3, 0.3, 0.3, 1.0)),
                 ),
                 Structure::Renewables => graphics::draw(
                     ctx,
-                    assets.fetch_mesh(DrawableHandle::Circle),
-                    DrawParam::new()
-                        .dest(map_pos_to_screen(pos))
-                        .color(Color::new(1.0, 1.0, 1.0, 1.0))
-                        .scale(na::Vector2::new(TILE_SIZE.0, TILE_SIZE.1)),
+                    assets.fetch_sprite(SpriteHandle::Renewables),
+                    DrawParam::new().dest(
+                        map_pos_to_screen(pos) + na::Vector2::new(-TILE_SIZE.0, -0.5 * TILE_SIZE.1),
+                    ),
                 ),
                 Structure::Farm => graphics::draw(
                     ctx,
-                    assets.fetch_mesh(DrawableHandle::Circle),
-                    DrawParam::new()
-                        .dest(map_pos_to_screen(pos))
-                        .color(Color::new(1.0, 0.5, 0.0, 1.0))
-                        .scale(na::Vector2::new(TILE_SIZE.0, TILE_SIZE.1)),
+                    assets.fetch_sprite(SpriteHandle::Farm),
+                    DrawParam::new().dest(
+                        map_pos_to_screen(pos) + na::Vector2::new(-TILE_SIZE.0, -0.5 * TILE_SIZE.1),
+                    ),
                 ),
                 Structure::Fishery => graphics::draw(
                     ctx,
-                    assets.fetch_mesh(DrawableHandle::Circle),
+                    assets.fetch_sprite(SpriteHandle::Fishery),
                     DrawParam::new()
-                        .dest(map_pos_to_screen(pos))
-                        .color(Color::new(0.0, 0.5, 1.0, 1.0))
-                        .scale(na::Vector2::new(TILE_SIZE.0, TILE_SIZE.1)),
+                        .dest(
+                            map_pos_to_screen(pos)
+                                + na::Vector2::new(-TILE_SIZE.0, -0.5 * TILE_SIZE.1),
+                        )
+                        .color(Color::new(0.5, 0.5, 1.0, 1.0)),
                 ),
             },
         }
@@ -126,7 +130,7 @@ impl Tile {
         if hit_test(ctx, pos) {
             graphics::draw(
                 ctx,
-                assets.fetch_mesh(DrawableHandle::TileSelector),
+                assets.fetch_mesh(MeshHandle::TileSelector),
                 DrawParam::new().dest(pos).color(random_color()),
             )?;
             let pos = pos - na::Vector2::new(0.0, TILE_SIZE.1);

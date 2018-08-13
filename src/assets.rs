@@ -1,16 +1,22 @@
 use super::ecs::TILE_SIZE;
-use ggez::graphics::{self, Color, DrawMode, Drawable, Image, Mesh, MeshBuilder};
+use ggez::audio::{SoundData, Source};
+use ggez::graphics::{Color, DrawMode, Drawable, Image, Mesh};
 use ggez::{Context, GameResult};
 use nalgebra as na;
 use rand;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-pub enum DrawableHandle {
+pub enum MeshHandle {
     Circle,
     Box,
     Tile,
     TileSelector,
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+pub enum SpriteHandle {
+    TileSprite,
     Terraform,
     Trees,
     Housing,
@@ -22,28 +28,33 @@ pub enum DrawableHandle {
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-enum DrawableType {
-    Mesh,
-    Sprite,
+pub enum SoundHandle {
+    Click,
+    Construct,
+    WaveCrash,
+    Waves,
+    Nonstop,
 }
 
 pub struct Assets {
-    meshes: HashMap<DrawableHandle, Mesh>,
-    sprites: HashMap<DrawableHandle, Image>,
+    meshes: HashMap<MeshHandle, Mesh>,
+    sprites: HashMap<SpriteHandle, Image>,
+    sounds: HashMap<SoundHandle, Source>,
 }
 
 impl Assets {
     pub fn new(ctx: &mut Context) -> GameResult<Assets> {
         let mut meshes = HashMap::new();
         let mut sprites = HashMap::new();
+        let mut sounds = HashMap::new();
 
         meshes.insert(
-            DrawableHandle::Circle,
+            MeshHandle::Circle,
             Mesh::new_circle(ctx, DrawMode::Fill, na::Point2::origin(), 0.2, 0.1)?,
         );
 
         meshes.insert(
-            DrawableHandle::Box,
+            MeshHandle::Box,
             Mesh::new_polygon(
                 ctx,
                 DrawMode::Fill,
@@ -57,7 +68,7 @@ impl Assets {
         );
 
         meshes.insert(
-            DrawableHandle::Tile,
+            MeshHandle::Tile,
             Mesh::new_polygon(
                 ctx,
                 DrawMode::Fill,
@@ -73,7 +84,7 @@ impl Assets {
         );
 
         meshes.insert(
-            DrawableHandle::TileSelector,
+            MeshHandle::TileSelector,
             Mesh::new_polyline(
                 ctx,
                 DrawMode::Line(1.0),
@@ -94,57 +105,149 @@ impl Assets {
         );
 
         sprites.insert(
-            DrawableHandle::Trees,
+            SpriteHandle::TileSprite,
+            Image::from_bytes(
+                ctx,
+                include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/tile.png")),
+            )?,
+        );
+
+        sprites.insert(
+            SpriteHandle::Trees,
             Image::from_bytes(
                 ctx,
                 include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/trees.png")),
             )?,
         );
 
-        meshes.insert(
-            DrawableHandle::Terraform,
-            Mesh::new_circle(ctx, DrawMode::Fill, na::Point2::origin(), 0.2, 0.1)?,
+        sprites.insert(
+            SpriteHandle::Terraform,
+            Image::from_bytes(
+                ctx,
+                include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/house.png")),
+            )?,
         );
 
-        meshes.insert(
-            DrawableHandle::Housing,
-            Mesh::new_circle(ctx, DrawMode::Fill, na::Point2::origin(), 0.2, 0.1)?,
+        sprites.insert(
+            SpriteHandle::Housing,
+            Image::from_bytes(
+                ctx,
+                include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/house.png")),
+            )?,
         );
 
-        meshes.insert(
-            DrawableHandle::Sanctuary,
-            Mesh::new_circle(ctx, DrawMode::Fill, na::Point2::origin(), 0.2, 0.1)?,
+        sprites.insert(
+            SpriteHandle::Sanctuary,
+            Image::from_bytes(
+                ctx,
+                include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/house.png")),
+            )?,
         );
 
-        meshes.insert(
-            DrawableHandle::Powerplant,
-            Mesh::new_circle(ctx, DrawMode::Fill, na::Point2::origin(), 0.2, 0.1)?,
+        sprites.insert(
+            SpriteHandle::Powerplant,
+            Image::from_bytes(
+                ctx,
+                include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/house.png")),
+            )?,
         );
 
-        meshes.insert(
-            DrawableHandle::Renewables,
-            Mesh::new_circle(ctx, DrawMode::Fill, na::Point2::origin(), 0.2, 0.1)?,
+        sprites.insert(
+            SpriteHandle::Renewables,
+            Image::from_bytes(
+                ctx,
+                include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/house.png")),
+            )?,
         );
 
-        meshes.insert(
-            DrawableHandle::Farm,
-            Mesh::new_circle(ctx, DrawMode::Fill, na::Point2::origin(), 0.2, 0.1)?,
+        sprites.insert(
+            SpriteHandle::Farm,
+            Image::from_bytes(
+                ctx,
+                include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/farm.png")),
+            )?,
         );
 
-        meshes.insert(
-            DrawableHandle::Fishery,
-            Mesh::new_circle(ctx, DrawMode::Fill, na::Point2::origin(), 0.2, 0.1)?,
+        sprites.insert(
+            SpriteHandle::Fishery,
+            Image::from_bytes(
+                ctx,
+                include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/house.png")),
+            )?,
         );
 
-        Ok(Assets { meshes, sprites })
+        sounds.insert(
+            SoundHandle::Click,
+            Source::from_data(
+                ctx,
+                SoundData::from_bytes(include_bytes!(concat!(
+                    env!("CARGO_MANIFEST_DIR"),
+                    "/assets/Click.ogg"
+                ))),
+            )?,
+        );
+
+        sounds.insert(
+            SoundHandle::Construct,
+            Source::from_data(
+                ctx,
+                SoundData::from_bytes(include_bytes!(concat!(
+                    env!("CARGO_MANIFEST_DIR"),
+                    "/assets/Construct.ogg"
+                ))),
+            )?,
+        );
+
+        sounds.insert(
+            SoundHandle::Nonstop,
+            Source::from_data(
+                ctx,
+                SoundData::from_bytes(include_bytes!(concat!(
+                    env!("CARGO_MANIFEST_DIR"),
+                    "/assets/Nonstop.ogg"
+                ))),
+            )?,
+        );
+
+        sounds.insert(
+            SoundHandle::WaveCrash,
+            Source::from_data(
+                ctx,
+                SoundData::from_bytes(include_bytes!(concat!(
+                    env!("CARGO_MANIFEST_DIR"),
+                    "/assets/WaveCrash.ogg"
+                ))),
+            )?,
+        );
+
+        sounds.insert(
+            SoundHandle::Waves,
+            Source::from_data(
+                ctx,
+                SoundData::from_bytes(include_bytes!(concat!(
+                    env!("CARGO_MANIFEST_DIR"),
+                    "/assets/Waves.ogg"
+                ))),
+            )?,
+        );
+
+        Ok(Assets {
+            meshes,
+            sprites,
+            sounds,
+        })
     }
 
-    pub fn fetch_mesh(&self, handle: DrawableHandle) -> &impl Drawable {
+    pub fn fetch_mesh(&self, handle: MeshHandle) -> &impl Drawable {
         self.meshes.get(&handle).unwrap()
     }
 
-    pub fn fetch_sprite(&self, handle: DrawableHandle) -> &impl Drawable {
+    pub fn fetch_sprite(&self, handle: SpriteHandle) -> &impl Drawable {
         self.sprites.get(&handle).unwrap()
+    }
+
+    pub fn fetch_sound(&mut self, handle: SoundHandle) -> &mut Source {
+        self.sounds.get_mut(&handle).unwrap()
     }
 }
 
