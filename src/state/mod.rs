@@ -13,10 +13,12 @@ use time::{AllThingsDoer, Time};
 
 mod context_menu;
 mod game;
+mod game_over;
 mod main_menu;
 
 pub use self::context_menu::ContextMenu;
 pub use self::game::Game;
+pub use self::game_over::GameOver;
 pub use self::main_menu::MainMenu;
 
 pub enum Transition {

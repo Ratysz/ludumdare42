@@ -3,6 +3,7 @@ use specs::prelude::*;
 
 pub struct Time {
     pub game_over: bool,
+    pub game_over_transition_done: bool,
     pub score: i32,
     pub turn_passed: bool,
     pub turn: i32,
@@ -25,6 +26,7 @@ impl Time {
     pub fn new() -> Time {
         Time {
             game_over: false,
+            game_over_transition_done: false,
             score: 0,
             turn_passed: false,
             turn: 0,

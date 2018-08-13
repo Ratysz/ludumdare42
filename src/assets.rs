@@ -123,7 +123,7 @@ impl Assets {
             SpriteHandle::Terraform,
             Image::from_bytes(
                 ctx,
-                include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/house.png")),
+                include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/terraform.png")),
             )?,
         );
 
@@ -139,7 +139,7 @@ impl Assets {
             SpriteHandle::Sanctuary,
             Image::from_bytes(
                 ctx,
-                include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/house.png")),
+                include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/sanctuary.png")),
             )?,
         );
 
@@ -181,49 +181,49 @@ impl Assets {
             )?,
         );
 
-        sounds.insert(
-            SoundHandle::Click,
-            Source::from_data(
-                ctx,
-                SoundData::from_bytes(include_bytes!(concat!(
-                    env!("CARGO_MANIFEST_DIR"),
-                    "/assets/Click.ogg"
-                ))),
-            )?,
-        );
+        let mut source = Source::from_data(
+            ctx,
+            SoundData::from_bytes(include_bytes!(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/assets/Click.ogg"
+            ))),
+        )?;
+        let volume = source.volume();
+        source.set_volume(0.5 * volume);
+        sounds.insert(SoundHandle::Click, source);
 
-        sounds.insert(
-            SoundHandle::Construct,
-            Source::from_data(
-                ctx,
-                SoundData::from_bytes(include_bytes!(concat!(
-                    env!("CARGO_MANIFEST_DIR"),
-                    "/assets/Construct.ogg"
-                ))),
-            )?,
-        );
+        let mut source = Source::from_data(
+            ctx,
+            SoundData::from_bytes(include_bytes!(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/assets/Construct.ogg"
+            ))),
+        )?;
+        let volume = source.volume();
+        source.set_volume(0.5 * volume);
+        sounds.insert(SoundHandle::Construct, source);
 
-        sounds.insert(
-            SoundHandle::WaveCrash,
-            Source::from_data(
-                ctx,
-                SoundData::from_bytes(include_bytes!(concat!(
-                    env!("CARGO_MANIFEST_DIR"),
-                    "/assets/WaveCrash.ogg"
-                ))),
-            )?,
-        );
+        let mut source = Source::from_data(
+            ctx,
+            SoundData::from_bytes(include_bytes!(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/assets/WaveCrash.ogg"
+            ))),
+        )?;
+        let volume = source.volume();
+        source.set_volume(0.5 * volume);
+        sounds.insert(SoundHandle::WaveCrash, source);
 
-        sounds.insert(
-            SoundHandle::Waves,
-            Source::from_data(
-                ctx,
-                SoundData::from_bytes(include_bytes!(concat!(
-                    env!("CARGO_MANIFEST_DIR"),
-                    "/assets/Waves.ogg"
-                ))),
-            )?,
-        );
+        let mut source = Source::from_data(
+            ctx,
+            SoundData::from_bytes(include_bytes!(concat!(
+                env!("CARGO_MANIFEST_DIR"),
+                "/assets/Waves.ogg"
+            ))),
+        )?;
+        let volume = source.volume();
+        source.set_volume(0.25 * volume);
+        sounds.insert(SoundHandle::Waves, source);
 
         Ok(Assets {
             meshes,

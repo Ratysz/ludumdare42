@@ -8,20 +8,11 @@ pub struct Game<'a, 'b> {
     animation: Dispatcher<'a, 'b>,
     is_top: bool,
     skip_text: Text,
+    rules_text: Text,
 }
-
-const MULTIPLIER: f32 = 32.0 / TILE_SIZE.0 as f32;
 
 impl<'a, 'b> Game<'a, 'b> {
     pub fn new<'c>(world: &'c mut World) -> Game<'a, 'b> {
-        world.res.entry::<Grid>().or_insert_with(|| {
-            Grid::new(
-                (8.0 * MULTIPLIER).floor() as usize,
-                (8.0 * MULTIPLIER).floor() as usize,
-                (16.0 * MULTIPLIER).floor() as usize,
-            )
-        });
-
         let mut logic = DispatcherBuilder::new().build();
         logic.setup(&mut world.res);
 
@@ -33,14 +24,23 @@ impl<'a, 'b> Game<'a, 'b> {
         grid_populator.run_now(&mut world.res);
         world.maintain();
 
-        let mut text = Text::new("[skip turn]");
-        text.set_bounds(na::Point2::new(100.0, INFINITY), Align::Center);
+        let mut skip_text = Text::new("[skip turn]");
+        let mut rules_text = Text::new(
+            TextFragment::new(
+                "Population needs either food or housing to survive.\n\
+                 Population requires food to grow.\n\
+                 Sanctuaries require power to work.\n\
+                 Negative nature makes sea rise faster!",
+            ).scale(Scale::uniform(15.0)),
+        );
+        rules_text.set_bounds(na::Point2::new(640.0, INFINITY), Align::Right);
 
         Game {
             logic,
             animation,
             is_top: false,
-            skip_text: text,
+            skip_text,
+            rules_text,
         }
     }
 }
@@ -110,7 +110,7 @@ impl<'a, 'b> State for Game<'a, 'b> {
                 if let Some(menu) = ContextMenu::new(_ctx, _world, _assets) {
                     return Ok(Transition::Push(Box::new(menu)));
                 } else {
-                    if ((350.0 - x as f32).abs() as u32) < self.skip_text.width(_ctx)
+                    if ((260.0 - x as f32).abs() as u32) < self.skip_text.width(_ctx)
                         && ((5.0 - y as f32).abs() as u32) < self.skip_text.height(_ctx)
                     {
                         _world.write_resource::<Time>().turn_passed = true;
@@ -121,6 +121,24 @@ impl<'a, 'b> State for Game<'a, 'b> {
             _ => (),
         }
         Ok(Transition::None)
+    }
+
+    fn update(
+        &mut self,
+        _ctx: &mut Context,
+        _assets: &mut Assets,
+        _world: &mut World,
+    ) -> GameResult<Transition> {
+        let over = _world.read_resource::<Time>().game_over;
+        if over {
+            Ok(Transition::Push(Box::new(super::GameOver(
+                _world.read_resource::<Time>().score,
+            ))))
+        } else if _world.read_resource::<Time>().game_over_transition_done {
+            Ok(Transition::Pop)
+        } else {
+            Ok(Transition::None)
+        }
     }
 
     fn draw(&mut self, _ctx: &mut Context, _assets: &mut Assets, _world: &mut World) -> GameResult {
@@ -146,7 +164,7 @@ impl<'a, 'b> State for Game<'a, 'b> {
         gui::draw_score(_ctx, &time)?;
         let offset = self.skip_text.width(_ctx) as f32;
         let mpos = mouse::get_position(_ctx);
-        let color = if ((350.0 - mpos.x as f32).abs() as u32) < self.skip_text.width(_ctx)
+        let color = if ((260.0 - mpos.x as f32).abs() as u32) < self.skip_text.width(_ctx)
             && ((5.0 - mpos.y as f32).abs() as u32) < self.skip_text.height(_ctx)
         {
             Color::new(0.5, 1.0, 0.5, 1.0)
@@ -157,9 +175,10 @@ impl<'a, 'b> State for Game<'a, 'b> {
             _ctx,
             &self.skip_text,
             DrawParam::new()
-                .dest(na::Point2::new(340.0 - offset, 5.0))
+                .dest(na::Point2::new(260.0 - offset, 5.0))
                 .color(color),
         )?;
+        graphics::draw(_ctx, &self.rules_text, DrawParam::new())?;
         Ok(())
     }
 

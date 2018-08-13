@@ -77,9 +77,12 @@ impl Tile {
                 Structure::Sanctuary => graphics::draw(
                     ctx,
                     assets.fetch_sprite(SpriteHandle::Sanctuary),
-                    DrawParam::new().dest(
-                        map_pos_to_screen(pos) + na::Vector2::new(-TILE_SIZE.0, -0.5 * TILE_SIZE.1),
-                    ),
+                    DrawParam::new()
+                        .dest(
+                            map_pos_to_screen(pos)
+                                + na::Vector2::new(-TILE_SIZE.0, -0.5 * TILE_SIZE.1),
+                        )
+                        .color(Color::new(0.9, 0.9, 0.9, 1.0)),
                 ),
                 Structure::Powerplant => graphics::draw(
                     ctx,
