@@ -15,7 +15,11 @@ pub struct ContextMenu {
 }
 
 impl ContextMenu {
-    pub fn new<'c>(ctx: &Context, world: &'c mut World) -> Option<ContextMenu> {
+    pub fn new<'c>(
+        ctx: &Context,
+        world: &'c mut World,
+        assets: &mut Assets,
+    ) -> Option<ContextMenu> {
         let grid = world.read_resource::<Grid>();
         let entities = world.entities();
         let positions = world.read_storage::<Position>();
@@ -74,6 +78,7 @@ impl ContextMenu {
                     SpriteHandle::Renewables,
                 ),
             ];
+            assets.fetch_sound(SoundHandle::Click).play();
             return Some(ContextMenu {
                 is_top: false,
                 target_entity: entity,
@@ -133,11 +138,13 @@ impl State for ContextMenu {
         _command: Command,
         _extra: InputExtra,
     ) -> GameResult<Transition> {
+        let mut reflood = false;
         if _command == Command::Click {
             let mut i = 0;
             let mut new_tile = None;
             let mut pick_or_place = false;
             let mut grid = _world.write_resource::<Grid>();
+            let mut time = _world.write_resource::<Time>();
             for (vec, sprite) in &self.options {
                 if self.near_city
                     && !self.in_water
@@ -180,6 +187,8 @@ impl State for ContextMenu {
                     }
                 }
                 if modify {
+                    _assets.fetch_sound(SoundHandle::Construct).play();
+                    time.turn_passed = true;
                     if pick_or_place {
                         grid.held_tile = None;
                     }
@@ -197,6 +206,8 @@ impl State for ContextMenu {
                         self.target_pos.z(),
                     );
                 } else if place {
+                    _assets.fetch_sound(SoundHandle::Construct).play();
+                    time.turn_passed = true;
                     if pick_or_place {
                         grid.held_tile = None;
                     }
@@ -215,6 +226,7 @@ impl State for ContextMenu {
                     tiles.insert(entity, new_tile).unwrap();
                 }
             } else if pick_or_place {
+                _assets.fetch_sound(SoundHandle::Construct).play();
                 grid.held_tile = Some(self.target_tile);
                 debug!(
                     "removing {} {} {}",
@@ -231,7 +243,12 @@ impl State for ContextMenu {
                     self.target_pos.y(),
                     self.target_pos.z() - 1,
                 );
+                reflood = true;
             }
+        }
+        if reflood {
+            _world.write_resource::<Grid>().current_sealevel -= 1;
+            mapgen::Flood.run_now(&mut _world.res);
         }
         Ok(Transition::Pop)
     }
@@ -317,16 +334,16 @@ impl State for ContextMenu {
                     6 => " (+2 power)",
                     _ => panic!("that shouldn't happen"),
                 }));
-                tooltip::draw(_ctx, pos, &text);
+                gui::draw_tooltip(_ctx, pos, &text);
             }
             i += 1;
         }
         if !self.near_city {
             let text = Text::new("Too far from city!");
-            tooltip::draw(_ctx, pos, &text);
+            gui::draw_tooltip(_ctx, pos, &text);
         } else if self.in_water {
             let text = Text::new("Can't build on water!");
-            tooltip::draw(_ctx, pos, &text);
+            gui::draw_tooltip(_ctx, pos, &text);
         }
         Ok(())
     }

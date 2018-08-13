@@ -89,14 +89,17 @@ impl Tile {
                             map_pos_to_screen(pos)
                                 + na::Vector2::new(-TILE_SIZE.0, -0.5 * TILE_SIZE.1),
                         )
-                        .color(Color::new(0.3, 0.3, 0.3, 1.0)),
+                        .color(Color::new(0.9, 0.9, 0.9, 1.0)),
                 ),
                 Structure::Renewables => graphics::draw(
                     ctx,
                     assets.fetch_sprite(SpriteHandle::Renewables),
-                    DrawParam::new().dest(
-                        map_pos_to_screen(pos) + na::Vector2::new(-TILE_SIZE.0, -0.5 * TILE_SIZE.1),
-                    ),
+                    DrawParam::new()
+                        .dest(
+                            map_pos_to_screen(pos)
+                                + na::Vector2::new(-TILE_SIZE.0, -0.5 * TILE_SIZE.1),
+                        )
+                        .color(Color::new(0.9, 0.9, 0.9, 1.0)),
                 ),
                 Structure::Farm => graphics::draw(
                     ctx,
@@ -113,7 +116,7 @@ impl Tile {
                             map_pos_to_screen(pos)
                                 + na::Vector2::new(-TILE_SIZE.0, -0.5 * TILE_SIZE.1),
                         )
-                        .color(Color::new(0.5, 0.5, 1.0, 1.0)),
+                        .color(Color::new(0.9, 0.9, 0.9, 1.0)),
                 ),
             },
         }
@@ -147,7 +150,7 @@ impl Tile {
                     Structure::Fishery => "Fishing Pier",
                 },
             });
-            tooltip::draw(ctx, pos, &text);
+            gui::draw_tooltip(ctx, pos, &text);
             Ok(true)
         } else {
             Ok(false)

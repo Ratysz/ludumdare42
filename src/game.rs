@@ -147,9 +147,6 @@ impl EventHandler for Game {
 
     fn draw(&mut self, ctx: &mut Context) -> GameResult {
         graphics::clear(ctx, Color::from([0.0, 0.0, 0.0, 1.0]));
-        self.world
-            .write_resource::<Time>()
-            .update_delta(timer::get_delta(ctx));
         let mut draw_depth = 0;
         {
             let mut iterator = self.state_stack.iter();

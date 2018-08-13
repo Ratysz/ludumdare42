@@ -7,8 +7,9 @@ use std::fmt::{Display, Formatter, Result};
 
 use assets::{random_color, Assets, MeshHandle, SoundHandle, SpriteHandle};
 use ecs::*;
+use gui;
 use input::{Command, InputExtra};
-use tooltip;
+use time::{AllThingsDoer, Time};
 
 mod context_menu;
 mod game;

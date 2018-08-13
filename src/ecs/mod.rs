@@ -1,7 +1,8 @@
 use specs::prelude::*;
 use specs::world::Index;
 
-use tooltip;
+use gui;
+use time::Time;
 
 pub mod grid;
 pub mod mapgen;

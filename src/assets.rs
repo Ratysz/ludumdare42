@@ -147,7 +147,10 @@ impl Assets {
             SpriteHandle::Powerplant,
             Image::from_bytes(
                 ctx,
-                include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/house.png")),
+                include_bytes!(concat!(
+                    env!("CARGO_MANIFEST_DIR"),
+                    "/assets/powerplant.png"
+                )),
             )?,
         );
 
@@ -155,7 +158,10 @@ impl Assets {
             SpriteHandle::Renewables,
             Image::from_bytes(
                 ctx,
-                include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/house.png")),
+                include_bytes!(concat!(
+                    env!("CARGO_MANIFEST_DIR"),
+                    "/assets/renewables.png"
+                )),
             )?,
         );
 
@@ -171,7 +177,7 @@ impl Assets {
             SpriteHandle::Fishery,
             Image::from_bytes(
                 ctx,
-                include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/house.png")),
+                include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/fishery.png")),
             )?,
         );
 
