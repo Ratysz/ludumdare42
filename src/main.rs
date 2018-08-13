@@ -22,7 +22,6 @@ use ggez::{ContextBuilder, GameResult};
 mod assets;
 mod ecs;
 mod game;
-mod gui;
 mod input;
 mod saveload;
 mod state;

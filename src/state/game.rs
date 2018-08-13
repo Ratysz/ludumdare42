@@ -7,9 +7,17 @@ pub struct Game<'a, 'b> {
     is_top: bool,
 }
 
+const MULTIPLIER: f32 = 32.0 / TILE_SIZE.0 as f32;
+
 impl<'a, 'b> Game<'a, 'b> {
     pub fn new<'c>(world: &'c mut World) -> Game<'a, 'b> {
-        world.res.entry::<Grid>().or_insert_with(|| Grid::default());
+        world.res.entry::<Grid>().or_insert_with(|| {
+            Grid::new(
+                (8.0 * MULTIPLIER).floor() as usize,
+                (8.0 * MULTIPLIER).floor() as usize,
+                (16.0 * MULTIPLIER).floor() as usize,
+            )
+        });
 
         let mut logic = DispatcherBuilder::new()
             .with(grid::GridGravity, "grid_gravity", &[])

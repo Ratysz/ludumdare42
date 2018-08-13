@@ -26,13 +26,13 @@ impl<'a> System<'a> for GenerateMap {
                             .abs())
                     .max(1.0)
                     .min(d as f64 - 1.0);
-                for z in 0..(bound as usize) {
+                for z in 0..(bound.floor() as usize) {
                     let entity = entities.create();
                     positions
-                        .insert(entity, grid.new_position(entity, x, y, z))
+                        .insert(entity, grid.new_position(Tile::Terrain, x, y, z))
                         .unwrap();
                     tiles.insert(entity, Tile::Terrain).unwrap();
-                    map.insert((x, y, z), Tile::Terrain);
+                    map.insert((x, y, z), (entity, Tile::Terrain));
                 }
             }
         }
@@ -42,33 +42,203 @@ impl<'a> System<'a> for GenerateMap {
                     if !map.contains_key(&(x, y, z)) {
                         let entity = entities.create();
                         positions
-                            .insert(entity, grid.new_position(entity, x, y, z))
+                            .insert(entity, grid.new_position(Tile::Water, x, y, z))
                             .unwrap();
                         tiles.insert(entity, Tile::Water).unwrap();
-                        map.insert((x, y, z), Tile::Water);
+                        map.insert((x, y, z), (entity, Tile::Water));
                     }
                 }
             }
         }
         for x in 0..w {
             for y in 0..h {
-                for z in 4..d {
-                    if !map.contains_key(&(x, y, z)) {
-                        if map.get(&(x, y, z - 1)) == Some(&Tile::Terrain) {
-                            if noise.get([
-                                (1.0 + 0.5 * x as f64 / w as f64),
-                                (1.0 + 2.0 * y as f64 / h as f64),
-                            ]) > 0.0
-                            {
-                                let entity = entities.create();
-                                positions
-                                    .insert(entity, grid.new_position(entity, x, y, z))
-                                    .unwrap();
-                                tiles.insert(entity, Tile::Trees).unwrap();
-                                map.insert((x, y, z), Tile::Trees);
-                                break;
+                for z in 4..(d / 2) {
+                    if !map.contains_key(&(x, y, z))
+                        && noise.get([
+                            (1.0 + 2.0 * x as f64 / w as f64),
+                            (1.0 + 10.0 * y as f64 / h as f64),
+                        ]) > 0.0
+                    {
+                        if {
+                            if let Some((_, tile)) = map.get(&(x, y, z - 1)) {
+                                match tile {
+                                    Tile::Terrain => true,
+                                    _ => false,
+                                }
+                            } else {
+                                false
                             }
+                        } {
+                            let entity = entities.create();
+                            positions
+                                .insert(entity, grid.new_position(Tile::Trees, x, y, z))
+                                .unwrap();
+                            tiles.insert(entity, Tile::Trees).unwrap();
+                            map.insert((x, y, z), (entity, Tile::Trees));
+                            break;
                         }
+                    }
+                }
+            }
+        }
+        let mut replaced = Vec::new();
+        'outer: for y in 1..h {
+            for x in (0..w).rev() {
+                if {
+                    if let Some((_, tile)) = map.get(&(x, y, 3)) {
+                        match tile {
+                            Tile::Terrain => match map.get(&(x, y, 4)) {
+                                Some((entity, tile)) => match tile {
+                                    Tile::Trees => {
+                                        debug!("replacing {} {} {}", x, y, 4);
+                                        *tiles.get_mut(*entity).unwrap() =
+                                            Tile::Structure(Structure::Fishery);
+                                        grid.new_position(
+                                            Tile::Structure(Structure::Fishery),
+                                            x,
+                                            y,
+                                            4,
+                                        );
+                                        replaced.push(*entity);
+                                        break 'outer;
+                                        false
+                                    }
+                                    _ => false,
+                                },
+                                None => true,
+                            },
+                            _ => false,
+                        }
+                    } else {
+                        false
+                    }
+                } {
+                    let entity = entities.create();
+                    positions
+                        .insert(
+                            entity,
+                            grid.new_position(Tile::Structure(Structure::Fishery), x, y, 4),
+                        )
+                        .unwrap();
+                    tiles
+                        .insert(entity, Tile::Structure(Structure::Fishery))
+                        .unwrap();
+                    map.insert((x, y, 4), (entity, Tile::Structure(Structure::Fishery)));
+                    break 'outer;
+                }
+            }
+        }
+        let mut houses = 0;
+        'outer: for x in (0..w).rev() {
+            for y in 1..h {
+                for z in 4..d / 2 {
+                    if {
+                        if let Some((_, tile)) = map.get(&(x, y, z - 1)) {
+                            match tile {
+                                Tile::Terrain => if grid.is_civilizable(x, y) {
+                                    match map.get(&(x, y, z)) {
+                                        Some((entity, tile)) => match tile {
+                                            Tile::Trees => {
+                                                if !replaced.contains(entity) {
+                                                    debug!("replacing {} {} {}", x, y, z);
+                                                    *tiles.get_mut(*entity).unwrap() =
+                                                        Tile::Structure(Structure::Housing);
+                                                    grid.new_position(
+                                                        Tile::Structure(Structure::Housing),
+                                                        x,
+                                                        y,
+                                                        z,
+                                                    );
+                                                    replaced.push(*entity);
+                                                    houses += 1;
+                                                    if houses > 2 {
+                                                        break 'outer;
+                                                    }
+                                                }
+                                                false
+                                            }
+                                            _ => false,
+                                        },
+                                        None => true,
+                                    }
+                                } else {
+                                    false
+                                },
+                                _ => false,
+                            }
+                        } else {
+                            false
+                        }
+                    } {
+                        let entity = entities.create();
+                        positions
+                            .insert(
+                                entity,
+                                grid.new_position(Tile::Structure(Structure::Housing), x, y, z),
+                            )
+                            .unwrap();
+                        tiles
+                            .insert(entity, Tile::Structure(Structure::Housing))
+                            .unwrap();
+                        map.insert((x, y, z), (entity, Tile::Structure(Structure::Housing)));
+                        houses += 1;
+                        if houses > 2 {
+                            break 'outer;
+                        }
+                    }
+                }
+            }
+        }
+        'outer: for y in 1..h {
+            for x in (0..w).rev() {
+                for z in 4..d / 2 {
+                    if {
+                        if let Some((_, tile)) = map.get(&(x, y, z - 1)) {
+                            match tile {
+                                Tile::Terrain => if grid.is_civilizable(x, y) {
+                                    match map.get(&(x, y, z)) {
+                                        Some((entity, tile)) => match tile {
+                                            Tile::Trees => {
+                                                if !replaced.contains(entity) {
+                                                    debug!("replacing {} {} {}", x, y, z);
+                                                    *tiles.get_mut(*entity).unwrap() =
+                                                        Tile::Structure(Structure::Powerplant);
+                                                    grid.new_position(
+                                                        Tile::Structure(Structure::Powerplant),
+                                                        x,
+                                                        y,
+                                                        4,
+                                                    );
+                                                    replaced.push(*entity);
+                                                    break 'outer;
+                                                }
+                                                false
+                                            }
+                                            _ => false,
+                                        },
+                                        None => true,
+                                    }
+                                } else {
+                                    false
+                                },
+                                _ => false,
+                            }
+                        } else {
+                            false
+                        }
+                    } {
+                        let entity = entities.create();
+                        positions
+                            .insert(
+                                entity,
+                                grid.new_position(Tile::Structure(Structure::Powerplant), x, y, z),
+                            )
+                            .unwrap();
+                        tiles
+                            .insert(entity, Tile::Structure(Structure::Powerplant))
+                            .unwrap();
+                        map.insert((x, y, z), (entity, Tile::Structure(Structure::Powerplant)));
+                        break 'outer;
                     }
                 }
             }
@@ -169,10 +339,11 @@ impl<'a> System<'a> for Flood {
         for ((x, y, z), entity) in &map {
             if let Some(entity) = entity {
                 *tiles.get_mut(*entity).unwrap() = Tile::Water;
+                grid.uncivilize(*x, *y);
             } else {
                 let entity = entities.create();
                 positions
-                    .insert(entity, grid.new_position(entity, *x, *y, *z))
+                    .insert(entity, grid.new_position(Tile::Water, *x, *y, *z))
                     .unwrap();
                 tiles.insert(entity, Tile::Water).unwrap();
             }

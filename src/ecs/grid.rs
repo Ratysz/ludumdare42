@@ -39,7 +39,7 @@ impl PartialOrd for Position {
 pub struct Grid {
     pub current_sealevel: usize,
     dimensions: (usize, usize, usize),
-    heightmap: HashMap<(usize, usize), usize>,
+    map: HashMap<(usize, usize), (usize, bool)>,
 }
 
 impl Default for Grid {
@@ -53,16 +53,22 @@ impl Grid {
         Grid {
             current_sealevel: 0,
             dimensions: (width, height, depth),
-            heightmap: HashMap::new(),
+            map: HashMap::new(),
         }
     }
 
-    pub fn new_position(&mut self, entity: Entity, x: usize, y: usize, z: usize) -> Position {
+    pub fn new_position(&mut self, tile: Tile, x: usize, y: usize, z: usize) -> Position {
+        let civilized = if let Tile::Structure(_) = tile {
+            true
+        } else {
+            false
+        };
         {
-            let height = self.heightmap.entry((x, y)).or_insert(z);
+            let (height, civ) = self.map.entry((x, y)).or_insert((z, civilized));
             if *height < z {
                 *height = z;
             }
+            *civ = civilized;
         }
         let (w, h, d) = self.dimensions();
         Position {
@@ -78,10 +84,44 @@ impl Grid {
     }
 
     pub fn is_top_tile(&self, pos: &Position) -> bool {
-        if let Some(height) = self.heightmap.get(&(pos.x(), pos.y())) {
+        if let Some((height, _)) = self.map.get(&(pos.x(), pos.y())) {
             return pos.z() == *height;
         }
         false
+    }
+
+    pub fn is_civilized(&self, x: usize, y: usize) -> bool {
+        if let Some((_, civilized)) = self.map.get(&(x, y)) {
+            return *civilized;
+        }
+        false
+    }
+
+    pub fn uncivilize(&mut self, x: usize, y: usize) {
+        if let Some((_, civilized)) = self.map.get_mut(&(x, y)) {
+            *civilized = false;
+        }
+    }
+
+    pub fn is_civilizable(&self, x: usize, y: usize) -> bool {
+        let (w, h, d) = self.dimensions();
+        (y > 0 && if let Some((_, civilized)) = self.map.get(&(x, y - 1)) {
+            *civilized
+        } else {
+            false
+        }) || (y < h && if let Some((_, civilized)) = self.map.get(&(x, y + 1)) {
+            *civilized
+        } else {
+            false
+        }) || (x > 0 && if let Some((_, civilized)) = self.map.get(&(x - 1, y)) {
+            *civilized
+        } else {
+            false
+        }) || (x < w && if let Some((_, civilized)) = self.map.get(&(x + 1, y)) {
+            *civilized
+        } else {
+            false
+        })
     }
 }
 
@@ -90,7 +130,5 @@ pub struct GridGravity;
 impl<'a> System<'a> for GridGravity {
     type SystemData = (Write<'a, Grid>, WriteStorage<'a, Position>);
 
-    fn run(&mut self, (grid, positions): Self::SystemData) {
-        debug!("hi");
-    }
+    fn run(&mut self, (grid, positions): Self::SystemData) {}
 }

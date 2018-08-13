@@ -1,5 +1,5 @@
 use super::ecs::TILE_SIZE;
-use ggez::graphics::{self, Color, DrawMode, Drawable, Mesh, MeshBuilder};
+use ggez::graphics::{self, Color, DrawMode, Drawable, Image, Mesh, MeshBuilder};
 use ggez::{Context, GameResult};
 use nalgebra as na;
 use rand;
@@ -11,30 +11,37 @@ pub enum DrawableHandle {
     Box,
     Tile,
     TileSelector,
+    Terraform,
+    Trees,
+    Housing,
+    Sanctuary,
+    Powerplant,
+    Renewables,
+    Farm,
+    Fishery,
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
 enum DrawableType {
     Mesh,
+    Sprite,
 }
 
 pub struct Assets {
-    types: HashMap<DrawableHandle, DrawableType>,
     meshes: HashMap<DrawableHandle, Mesh>,
+    sprites: HashMap<DrawableHandle, Image>,
 }
 
 impl Assets {
     pub fn new(ctx: &mut Context) -> GameResult<Assets> {
-        let mut types = HashMap::new();
         let mut meshes = HashMap::new();
+        let mut sprites = HashMap::new();
 
-        types.insert(DrawableHandle::Circle, DrawableType::Mesh);
         meshes.insert(
             DrawableHandle::Circle,
             Mesh::new_circle(ctx, DrawMode::Fill, na::Point2::origin(), 0.2, 0.1)?,
         );
 
-        types.insert(DrawableHandle::Box, DrawableType::Mesh);
         meshes.insert(
             DrawableHandle::Box,
             Mesh::new_polygon(
@@ -49,7 +56,6 @@ impl Assets {
             )?,
         );
 
-        types.insert(DrawableHandle::Tile, DrawableType::Mesh);
         meshes.insert(
             DrawableHandle::Tile,
             Mesh::new_polygon(
@@ -66,7 +72,6 @@ impl Assets {
             )?,
         );
 
-        types.insert(DrawableHandle::TileSelector, DrawableType::Mesh);
         meshes.insert(
             DrawableHandle::TileSelector,
             Mesh::new_polyline(
@@ -88,13 +93,58 @@ impl Assets {
             )?,
         );
 
-        Ok(Assets { types, meshes })
+        sprites.insert(
+            DrawableHandle::Trees,
+            Image::from_bytes(
+                ctx,
+                include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/assets/trees.png")),
+            )?,
+        );
+
+        meshes.insert(
+            DrawableHandle::Terraform,
+            Mesh::new_circle(ctx, DrawMode::Fill, na::Point2::origin(), 0.2, 0.1)?,
+        );
+
+        meshes.insert(
+            DrawableHandle::Housing,
+            Mesh::new_circle(ctx, DrawMode::Fill, na::Point2::origin(), 0.2, 0.1)?,
+        );
+
+        meshes.insert(
+            DrawableHandle::Sanctuary,
+            Mesh::new_circle(ctx, DrawMode::Fill, na::Point2::origin(), 0.2, 0.1)?,
+        );
+
+        meshes.insert(
+            DrawableHandle::Powerplant,
+            Mesh::new_circle(ctx, DrawMode::Fill, na::Point2::origin(), 0.2, 0.1)?,
+        );
+
+        meshes.insert(
+            DrawableHandle::Renewables,
+            Mesh::new_circle(ctx, DrawMode::Fill, na::Point2::origin(), 0.2, 0.1)?,
+        );
+
+        meshes.insert(
+            DrawableHandle::Farm,
+            Mesh::new_circle(ctx, DrawMode::Fill, na::Point2::origin(), 0.2, 0.1)?,
+        );
+
+        meshes.insert(
+            DrawableHandle::Fishery,
+            Mesh::new_circle(ctx, DrawMode::Fill, na::Point2::origin(), 0.2, 0.1)?,
+        );
+
+        Ok(Assets { meshes, sprites })
     }
 
-    pub fn fetch_drawable(&self, handle: DrawableHandle) -> &impl Drawable {
-        match self.types.get(&handle).unwrap() {
-            DrawableType::Mesh => self.meshes.get(&handle).unwrap(),
-        }
+    pub fn fetch_mesh(&self, handle: DrawableHandle) -> &impl Drawable {
+        self.meshes.get(&handle).unwrap()
+    }
+
+    pub fn fetch_sprite(&self, handle: DrawableHandle) -> &impl Drawable {
+        self.sprites.get(&handle).unwrap()
     }
 }
 
