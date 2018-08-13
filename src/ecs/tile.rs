@@ -135,16 +135,16 @@ impl Tile {
             )?;
             //let pos = pos - na::Vector2::new(0.0, TILE_SIZE.1);
             let text = Text::new(match self {
-                Tile::Water => format!("Water ({})", z),
-                Tile::Terrain => format!("Terrain ({})", z),
-                Tile::Trees => format!("Trees ({})", z),
+                Tile::Water => "Water",
+                Tile::Terrain => "Terrain",
+                Tile::Trees => "Trees",
                 Tile::Structure(s) => match s {
-                    Structure::Housing => format!("Housing ({})", z),
-                    Structure::Sanctuary => format!("Sanctuary ({})", z),
-                    Structure::Powerplant => format!("Powerplant ({})", z),
-                    Structure::Renewables => format!("Renewables ({})", z),
-                    Structure::Farm => format!("Farm ({})", z),
-                    Structure::Fishery => format!("Fishery ({})", z),
+                    Structure::Housing => "Housing",
+                    Structure::Sanctuary => "Polar Bear Sanctuary",
+                    Structure::Powerplant => "Powerplant",
+                    Structure::Renewables => "Renewables",
+                    Structure::Farm => "Farm",
+                    Structure::Fishery => "Fishing Pier",
                 },
             });
             tooltip::draw(ctx, pos, &text);

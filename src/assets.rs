@@ -33,7 +33,6 @@ pub enum SoundHandle {
     Construct,
     WaveCrash,
     Waves,
-    Nonstop,
 }
 
 pub struct Assets {
@@ -194,17 +193,6 @@ impl Assets {
                 SoundData::from_bytes(include_bytes!(concat!(
                     env!("CARGO_MANIFEST_DIR"),
                     "/assets/Construct.ogg"
-                ))),
-            )?,
-        );
-
-        sounds.insert(
-            SoundHandle::Nonstop,
-            Source::from_data(
-                ctx,
-                SoundData::from_bytes(include_bytes!(concat!(
-                    env!("CARGO_MANIFEST_DIR"),
-                    "/assets/Nonstop.ogg"
                 ))),
             )?,
         );

@@ -136,6 +136,8 @@ impl State for ContextMenu {
         if _command == Command::Click {
             let mut i = 0;
             let mut new_tile = None;
+            let mut pick_or_place = false;
+            let mut grid = _world.write_resource::<Grid>();
             for (vec, sprite) in &self.options {
                 if self.near_city
                     && !self.in_water
@@ -151,15 +153,18 @@ impl State for ContextMenu {
                         },
                         3 => Some(Tile::Structure(Structure::Farm)),
                         4 => Some(Tile::Structure(Structure::Sanctuary)),
-                        5 => None,
+                        5 => {
+                            pick_or_place = true;
+                            grid.held_tile
+                        }
                         6 => Some(Tile::Structure(Structure::Renewables)),
                         _ => panic!("that shouldn't happen"),
                     };
+                    break;
                 }
                 i += 1;
             }
             if let Some(new_tile) = new_tile {
-                let mut grid = _world.write_resource::<Grid>();
                 let entities = _world.entities();
                 let mut positions = _world.write_storage::<Position>();
                 let mut tiles = _world.write_storage::<Tile>();
@@ -175,6 +180,9 @@ impl State for ContextMenu {
                     }
                 }
                 if modify {
+                    if pick_or_place {
+                        grid.held_tile = None;
+                    }
                     debug!(
                         "replacing {} {} {}",
                         self.target_pos.x(),
@@ -189,6 +197,9 @@ impl State for ContextMenu {
                         self.target_pos.z(),
                     );
                 } else if place {
+                    if pick_or_place {
+                        grid.held_tile = None;
+                    }
                     let entity = entities.create();
                     positions
                         .insert(
@@ -203,6 +214,23 @@ impl State for ContextMenu {
                         .unwrap();
                     tiles.insert(entity, new_tile).unwrap();
                 }
+            } else if pick_or_place {
+                grid.held_tile = Some(self.target_tile);
+                debug!(
+                    "removing {} {} {}",
+                    self.target_pos.x(),
+                    self.target_pos.y(),
+                    self.target_pos.z()
+                );
+                _world.entities().delete(self.target_entity);
+                grid.uncivilize(self.target_pos.x(), self.target_pos.y());
+                grid.lower_heightmap(self.target_pos.x(), self.target_pos.y());
+                grid.new_position(
+                    Tile::Terrain,
+                    self.target_pos.x(),
+                    self.target_pos.y(),
+                    self.target_pos.z() - 1,
+                );
             }
         }
         Ok(Transition::Pop)
@@ -240,8 +268,9 @@ impl State for ContextMenu {
                     DrawParam::new().dest(pos + vec).color(random_color()),
                 )?;
                 tooltip_drawn = true;
+                let mut grid = _world.write_resource::<Grid>();
                 let mut text = Text::new(TextFragment::new(match i {
-                    0 => "Build a ",
+                    0 => "Build ",
                     1 => "Build a ",
                     2 => if self.on_shore {
                         "Build a "
@@ -250,27 +279,27 @@ impl State for ContextMenu {
                     },
                     3 => "Build a ",
                     4 => "Build a ",
-                    5 => if false {
-                        "Place stored tile"
+                    5 => if grid.held_tile != None {
+                        "Place here"
                     } else {
-                        "Can't place here!"
+                        "Pick up"
                     },
                     6 => "Build ",
                     _ => panic!("that shouldn't happen"),
                 }));
                 text.add(
                     TextFragment::new(match i {
-                        0 => "house",
-                        1 => "power plant",
+                        0 => "Housing",
+                        1 => "Power Plant",
                         2 => if self.on_shore {
-                            "fishing pier"
+                            "Fishing Pier"
                         } else {
                             ""
                         },
-                        3 => "farm",
-                        4 => "polar bear freezer",
+                        3 => "Farm",
+                        4 => "Polar Bear Sanctuary",
                         5 => "",
-                        6 => "eco power generators",
+                        6 => "Eco Power Generators",
                         _ => panic!("that shouldn't happen"),
                     }).color(Color::new(0.1, 0.6, 0.6, 1.0)),
                 );

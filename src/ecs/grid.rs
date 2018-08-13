@@ -40,6 +40,7 @@ pub struct Grid {
     pub current_sealevel: usize,
     dimensions: (usize, usize, usize),
     map: HashMap<(usize, usize), (usize, bool)>,
+    pub held_tile: Option<Tile>,
 }
 
 impl Default for Grid {
@@ -54,6 +55,7 @@ impl Grid {
             current_sealevel: 0,
             dimensions: (width, height, depth),
             map: HashMap::new(),
+            held_tile: None,
         }
     }
 
@@ -76,6 +78,12 @@ impl Grid {
             y,
             z,
             ordering: (x as i32) - (y as i32) * (h as i32).pow(2) + (z as i32) * (d as i32).pow(3),
+        }
+    }
+
+    pub fn lower_heightmap(&mut self, x: usize, y: usize) {
+        if let Some((height, _)) = self.map.get_mut(&(x, y)) {
+            *height -= 1;
         }
     }
 
