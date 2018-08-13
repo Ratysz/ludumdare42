@@ -5,11 +5,13 @@ use std::f32::INFINITY;
 
 pub struct ContextMenu {
     is_top: bool,
-    target_id: Index,
+    target_entity: Entity,
     target_tile: Tile,
     target_pos: Position,
-    enabled: bool,
-    options: Vec<(na::Vector2<f32>, (SpriteHandle, bool))>,
+    near_city: bool,
+    in_water: bool,
+    on_shore: bool,
+    options: Vec<(na::Vector2<f32>, SpriteHandle)>,
 }
 
 impl ContextMenu {
@@ -18,49 +20,70 @@ impl ContextMenu {
         let entities = world.entities();
         let positions = world.read_storage::<Position>();
         let tiles = world.read_storage::<Tile>();
-        for (entity, pos, tile) in (&*entities, &positions, &tiles).join() {
-            if grid.is_top_tile(pos) && tile::hit_test(ctx, tile::map_pos_to_screen(pos)) {
-                debug!("Target: {:?} at {:?} ({:?})", tile, pos, entity);
-                let civ = grid.is_civilizable(pos.x(), pos.y());
-                let options = vec![
-                    (
-                        na::Vector2::new(-3.3 * TILE_SIZE.0, 0.5 * TILE_SIZE.0),
-                        (SpriteHandle::Housing, civ),
-                    ),
-                    (
-                        na::Vector2::new(-1.1 * TILE_SIZE.0, 0.5 * TILE_SIZE.0),
-                        (SpriteHandle::Powerplant, civ),
-                    ),
-                    (
-                        na::Vector2::new(1.1 * TILE_SIZE.0, 0.5 * TILE_SIZE.0),
-                        (SpriteHandle::Fishery, civ),
-                    ),
-                    (
-                        na::Vector2::new(3.3 * TILE_SIZE.0, 0.5 * TILE_SIZE.0),
-                        (SpriteHandle::Farm, civ),
-                    ),
-                    (
-                        na::Vector2::new(-2.2 * TILE_SIZE.0, 1.5 * TILE_SIZE.0),
-                        (SpriteHandle::Sanctuary, civ),
-                    ),
-                    (
-                        na::Vector2::new(0.0 * TILE_SIZE.0, 1.5 * TILE_SIZE.0),
-                        (SpriteHandle::Terraform, civ),
-                    ),
-                    (
-                        na::Vector2::new(2.2 * TILE_SIZE.0, 1.5 * TILE_SIZE.0),
-                        (SpriteHandle::Renewables, civ),
-                    ),
-                ];
-                return Some(ContextMenu {
-                    is_top: false,
-                    target_id: entity.id(),
-                    target_tile: *tile,
-                    target_pos: *pos,
-                    enabled: civ,
-                    options,
-                });
+        let target = (&*entities, &positions, &tiles)
+            .join()
+            .find(|(entity, pos, tile)| {
+                grid.is_top_tile(pos) && tile::hit_test(ctx, tile::map_pos_to_screen(pos))
+            });
+        if let Some((entity, pos, tile)) = target {
+            let in_water = *tile == Tile::Water;
+            let (w, h, d) = grid.dimensions();
+            let mut on_shore = false;
+            for (other_pos, other_tile) in (&positions, &tiles).join().filter(|(p, _)| {
+                (p.y() == pos.y()
+                    && (p.x() > 0 && p.x() - 1 <= pos.x())
+                    && (p.x() < w && p.x() + 1 >= pos.x()))
+                    || (p.x() == pos.x()
+                        && (p.y() > 0 && p.y() - 1 <= pos.y())
+                        && (p.y() < h && p.y() + 1 >= pos.y()))
+            }) {
+                if *other_tile == Tile::Water {
+                    on_shore = true;
+                    break;
+                }
             }
+            debug!("Target: {:?} at {:?} ({:?})", tile, pos, entity);
+            let civ = grid.is_civilizable(pos.x(), pos.y());
+            let options = vec![
+                (
+                    na::Vector2::new(-3.3 * TILE_SIZE.0, 0.5 * TILE_SIZE.0),
+                    SpriteHandle::Housing,
+                ),
+                (
+                    na::Vector2::new(-1.1 * TILE_SIZE.0, 0.5 * TILE_SIZE.0),
+                    SpriteHandle::Powerplant,
+                ),
+                (
+                    na::Vector2::new(1.1 * TILE_SIZE.0, 0.5 * TILE_SIZE.0),
+                    SpriteHandle::Fishery,
+                ),
+                (
+                    na::Vector2::new(3.3 * TILE_SIZE.0, 0.5 * TILE_SIZE.0),
+                    SpriteHandle::Farm,
+                ),
+                (
+                    na::Vector2::new(-2.2 * TILE_SIZE.0, 1.5 * TILE_SIZE.0),
+                    SpriteHandle::Sanctuary,
+                ),
+                (
+                    na::Vector2::new(0.0 * TILE_SIZE.0, 1.5 * TILE_SIZE.0),
+                    SpriteHandle::Terraform,
+                ),
+                (
+                    na::Vector2::new(2.2 * TILE_SIZE.0, 1.5 * TILE_SIZE.0),
+                    SpriteHandle::Renewables,
+                ),
+            ];
+            return Some(ContextMenu {
+                is_top: false,
+                target_entity: entity,
+                target_tile: *tile,
+                target_pos: *pos,
+                near_city: civ,
+                in_water,
+                on_shore,
+                options,
+            });
         }
         None
     }
@@ -110,6 +133,78 @@ impl State for ContextMenu {
         _command: Command,
         _extra: InputExtra,
     ) -> GameResult<Transition> {
+        if _command == Command::Click {
+            let mut i = 0;
+            let mut new_tile = None;
+            for (vec, sprite) in &self.options {
+                if self.near_city
+                    && !self.in_water
+                    && tile::hit_test(_ctx, tile::map_pos_to_screen(&self.target_pos) + vec)
+                {
+                    new_tile = match i {
+                        0 => Some(Tile::Structure(Structure::Housing)),
+                        1 => Some(Tile::Structure(Structure::Powerplant)),
+                        2 => if self.on_shore {
+                            Some(Tile::Structure(Structure::Fishery))
+                        } else {
+                            None
+                        },
+                        3 => Some(Tile::Structure(Structure::Farm)),
+                        4 => Some(Tile::Structure(Structure::Sanctuary)),
+                        5 => None,
+                        6 => Some(Tile::Structure(Structure::Renewables)),
+                        _ => panic!("that shouldn't happen"),
+                    };
+                }
+                i += 1;
+            }
+            if let Some(new_tile) = new_tile {
+                let mut grid = _world.write_resource::<Grid>();
+                let entities = _world.entities();
+                let mut positions = _world.write_storage::<Position>();
+                let mut tiles = _world.write_storage::<Tile>();
+                let mut modify = false;
+                let mut place = false;
+                for (entity, pos, tile) in (&*entities, &mut positions, &mut tiles).join() {
+                    if *pos == self.target_pos {
+                        match tile {
+                            Tile::Trees => modify = true,
+                            Tile::Terrain => place = true,
+                            _ => {}
+                        }
+                    }
+                }
+                if modify {
+                    debug!(
+                        "replacing {} {} {}",
+                        self.target_pos.x(),
+                        self.target_pos.y(),
+                        self.target_pos.z()
+                    );
+                    *tiles.get_mut(self.target_entity).unwrap() = new_tile;
+                    grid.new_position(
+                        new_tile,
+                        self.target_pos.x(),
+                        self.target_pos.y(),
+                        self.target_pos.z(),
+                    );
+                } else if place {
+                    let entity = entities.create();
+                    positions
+                        .insert(
+                            entity,
+                            grid.new_position(
+                                new_tile,
+                                self.target_pos.x(),
+                                self.target_pos.y(),
+                                self.target_pos.z() + 1,
+                            ),
+                        )
+                        .unwrap();
+                    tiles.insert(entity, new_tile).unwrap();
+                }
+            }
+        }
         Ok(Transition::Pop)
     }
 
@@ -122,7 +217,7 @@ impl State for ContextMenu {
         )?;
         let mut i = 0;
         let mut tooltip_drawn = false;
-        for (vec, (drawable, enabled)) in &self.options {
+        for (vec, sprite) in &self.options {
             graphics::draw(
                 _ctx,
                 _assets.fetch_mesh(MeshHandle::Tile),
@@ -133,11 +228,12 @@ impl State for ContextMenu {
             )?;
             graphics::draw(
                 _ctx,
-                _assets.fetch_sprite(*drawable),
+                _assets.fetch_sprite(*sprite),
                 DrawParam::new()
                     .dest(pos + vec + na::Vector2::new(-TILE_SIZE.0, -0.5 * TILE_SIZE.1)),
             )?;
-            if self.enabled && !tooltip_drawn && tile::hit_test(_ctx, pos + vec) {
+            if self.near_city && !self.in_water && !tooltip_drawn && tile::hit_test(_ctx, pos + vec)
+            {
                 graphics::draw(
                     _ctx,
                     _assets.fetch_mesh(MeshHandle::TileSelector),
@@ -147,14 +243,14 @@ impl State for ContextMenu {
                 let mut text = Text::new(TextFragment::new(match i {
                     0 => "Build a ",
                     1 => "Build a ",
-                    2 => if *enabled {
+                    2 => if self.on_shore {
                         "Build a "
                     } else {
                         "Needs to be on shore!"
                     },
                     3 => "Build a ",
                     4 => "Build a ",
-                    5 => if *enabled {
+                    5 => if false {
                         "Place stored tile"
                     } else {
                         "Can't place here!"
@@ -166,7 +262,7 @@ impl State for ContextMenu {
                     TextFragment::new(match i {
                         0 => "house",
                         1 => "power plant",
-                        2 => if *enabled {
+                        2 => if self.on_shore {
                             "fishing pier"
                         } else {
                             ""
@@ -176,12 +272,12 @@ impl State for ContextMenu {
                         5 => "",
                         6 => "eco power generators",
                         _ => panic!("that shouldn't happen"),
-                    }).color(Color::new(0.1, 0.5, 0.5, 1.0)),
+                    }).color(Color::new(0.1, 0.6, 0.6, 1.0)),
                 );
                 text.add(TextFragment::new(match i {
                     0 => " (+1 housing, -1 power)",
                     1 => " (+3 power, -1 nature)",
-                    2 => if *enabled {
+                    2 => if self.on_shore {
                         " (+3 food)"
                     } else {
                         ""
@@ -192,53 +288,17 @@ impl State for ContextMenu {
                     6 => " (+2 power)",
                     _ => panic!("that shouldn't happen"),
                 }));
-                let vec = na::Vector2::new(text.width(_ctx) as f32 * 0.5, 0.5 * TILE_SIZE.1);
-                let dim = text.dimensions(_ctx);
-                let rect = graphics::Mesh::new_rectangle(
-                    _ctx,
-                    graphics::DrawMode::Fill,
-                    graphics::Rect::new(0.0, 0.0, dim.0 as f32, dim.1 as f32),
-                )?;
-                graphics::draw(
-                    _ctx,
-                    &rect,
-                    DrawParam::new()
-                        .dest(pos - vec)
-                        .color(Color::new(0.0, 0.0, 0.0, 0.6)),
-                )?;
-                graphics::draw(_ctx, &text, DrawParam::new().dest(pos - vec))?;
+                tooltip::draw(_ctx, pos, &text);
             }
             i += 1;
         }
-        if !self.enabled {
+        if !self.near_city {
             let text = Text::new("Too far from city!");
-            let vec = na::Vector2::new(text.width(_ctx) as f32 * 0.5, 0.5 * TILE_SIZE.1);
-            let dim = text.dimensions(_ctx);
-            let rect = graphics::Mesh::new_rectangle(
-                _ctx,
-                graphics::DrawMode::Fill,
-                graphics::Rect::new(0.0, 0.0, dim.0 as f32, dim.1 as f32),
-            )?;
-            graphics::draw(
-                _ctx,
-                &rect,
-                DrawParam::new()
-                    .dest(pos - vec)
-                    .color(Color::new(0.0, 0.0, 0.0, 0.6)),
-            )?;
-            graphics::draw(_ctx, &text, DrawParam::new().dest(pos - vec))?;
+            tooltip::draw(_ctx, pos, &text);
+        } else if self.in_water {
+            let text = Text::new("Can't build on water!");
+            tooltip::draw(_ctx, pos, &text);
         }
-        /*let mut text = Text::new(format!("This is {:?}\n", tile));
-        text.add(format!(
-            "Civilized: {}\n",
-            grid.is_civilized(pos.x(), pos.y())
-        )).add(format!(
-            "Civilizable: {}\n",
-            grid.is_civilizable(pos.x(), pos.y())
-        ))
-            .add(format!("Height is {}\n", pos.z()))
-            .add(format!("X {} Y {}\n", pos.x(), pos.y()));
-        graphics::draw(_ctx, &text, (pos, graphics::WHITE));*/
         Ok(())
     }
 

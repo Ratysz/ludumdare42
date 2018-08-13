@@ -26,6 +26,7 @@ mod input;
 mod saveload;
 mod state;
 mod time;
+mod tooltip;
 
 fn wrapped() -> GameResult {
     let w_dim = nalgebra::Vector2::new(640.0, 380.0);

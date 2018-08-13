@@ -1,6 +1,8 @@
 use specs::prelude::*;
 use specs::world::Index;
 
+use tooltip;
+
 pub mod grid;
 pub mod mapgen;
 pub mod tile;

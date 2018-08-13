@@ -8,6 +8,7 @@ use std::fmt::{Display, Formatter, Result};
 use assets::{random_color, Assets, MeshHandle, SoundHandle, SpriteHandle};
 use ecs::*;
 use input::{Command, InputExtra};
+use tooltip;
 
 mod context_menu;
 mod game;

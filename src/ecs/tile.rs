@@ -102,7 +102,7 @@ impl Tile {
                     ctx,
                     assets.fetch_sprite(SpriteHandle::Farm),
                     DrawParam::new().dest(
-                        map_pos_to_screen(pos) + na::Vector2::new(-TILE_SIZE.0, -0.5 * TILE_SIZE.1),
+                        map_pos_to_screen(pos) + na::Vector2::new(-TILE_SIZE.0, -0.4 * TILE_SIZE.1),
                     ),
                 ),
                 Structure::Fishery => graphics::draw(
@@ -133,7 +133,7 @@ impl Tile {
                 assets.fetch_mesh(MeshHandle::TileSelector),
                 DrawParam::new().dest(pos).color(random_color()),
             )?;
-            let pos = pos - na::Vector2::new(0.0, TILE_SIZE.1);
+            //let pos = pos - na::Vector2::new(0.0, TILE_SIZE.1);
             let text = Text::new(match self {
                 Tile::Water => format!("Water ({})", z),
                 Tile::Terrain => format!("Terrain ({})", z),
@@ -147,20 +147,7 @@ impl Tile {
                     Structure::Fishery => format!("Fishery ({})", z),
                 },
             });
-            let dim = text.dimensions(ctx);
-            let rect = graphics::Mesh::new_rectangle(
-                ctx,
-                graphics::DrawMode::Fill,
-                graphics::Rect::new(0.0, 0.0, dim.0 as f32, dim.1 as f32),
-            )?;
-            graphics::draw(
-                ctx,
-                &rect,
-                DrawParam::new()
-                    .dest(pos)
-                    .color(Color::new(0.0, 0.0, 0.0, 0.6)),
-            )?;
-            graphics::draw(ctx, &text, DrawParam::new().dest(pos))?;
+            tooltip::draw(ctx, pos, &text);
             Ok(true)
         } else {
             Ok(false)
