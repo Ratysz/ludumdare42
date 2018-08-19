@@ -12,8 +12,8 @@ impl State for MainMenu {
         _world: &mut World,
     ) -> GameResult {
         info!("Main menu, go!");
-        _assets.fetch_sound(SoundHandle::Waves).set_repeat(true);
-        _assets.fetch_sound(SoundHandle::Waves).play();
+        _assets.sound(SoundHandle::Waves).set_repeat(true);
+        _assets.sound(SoundHandle::Waves).play();
         Ok(())
     }
 

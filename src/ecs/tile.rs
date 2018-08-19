@@ -4,7 +4,7 @@ use ggez::input::mouse;
 use ggez::{Context, GameResult};
 use nalgebra as na;
 
-use assets::{random_color, Assets, MeshHandle, SpriteHandle};
+use assets::{random_color, Assets, DrawableHandle};
 
 pub const TILE_SIZE: (f32, f32) = (32.0, 32.0);
 
@@ -39,7 +39,7 @@ impl Tile {
         match self {
             Tile::Water => graphics::draw(
                 ctx,
-                assets.fetch_mesh(MeshHandle::Tile),
+                assets.drawable(DrawableHandle::Tile),
                 DrawParam::new()
                     .dest(map_pos_to_screen(pos))
                     .color(map_pos_to_water_color(pos.z(), sealevel, depth))
@@ -47,7 +47,7 @@ impl Tile {
             ),
             Tile::Terrain => graphics::draw(
                 ctx,
-                assets.fetch_sprite(SpriteHandle::TileSprite),
+                assets.drawable(DrawableHandle::TileSprite),
                 DrawParam::new()
                     .dest(
                         map_pos_to_screen(pos) + na::Vector2::new(-TILE_SIZE.0, -0.5 * TILE_SIZE.1),
@@ -56,7 +56,7 @@ impl Tile {
             ),
             Tile::Trees => graphics::draw(
                 ctx,
-                assets.fetch_sprite(SpriteHandle::Trees),
+                assets.drawable(DrawableHandle::Trees),
                 DrawParam::new()
                     .dest(
                         map_pos_to_screen(pos) + na::Vector2::new(-TILE_SIZE.0, -0.5 * TILE_SIZE.1),
@@ -66,7 +66,7 @@ impl Tile {
             Tile::Structure(structure) => match structure {
                 Structure::Housing => graphics::draw(
                     ctx,
-                    assets.fetch_sprite(SpriteHandle::Housing),
+                    assets.drawable(DrawableHandle::Housing),
                     DrawParam::new()
                         .dest(
                             map_pos_to_screen(pos)
@@ -76,7 +76,7 @@ impl Tile {
                 ),
                 Structure::Sanctuary => graphics::draw(
                     ctx,
-                    assets.fetch_sprite(SpriteHandle::Sanctuary),
+                    assets.drawable(DrawableHandle::Sanctuary),
                     DrawParam::new()
                         .dest(
                             map_pos_to_screen(pos)
@@ -86,7 +86,7 @@ impl Tile {
                 ),
                 Structure::Powerplant => graphics::draw(
                     ctx,
-                    assets.fetch_sprite(SpriteHandle::Powerplant),
+                    assets.drawable(DrawableHandle::Powerplant),
                     DrawParam::new()
                         .dest(
                             map_pos_to_screen(pos)
@@ -96,7 +96,7 @@ impl Tile {
                 ),
                 Structure::Renewables => graphics::draw(
                     ctx,
-                    assets.fetch_sprite(SpriteHandle::Renewables),
+                    assets.drawable(DrawableHandle::Renewables),
                     DrawParam::new()
                         .dest(
                             map_pos_to_screen(pos)
@@ -106,14 +106,14 @@ impl Tile {
                 ),
                 Structure::Farm => graphics::draw(
                     ctx,
-                    assets.fetch_sprite(SpriteHandle::Farm),
+                    assets.drawable(DrawableHandle::Farm),
                     DrawParam::new().dest(
                         map_pos_to_screen(pos) + na::Vector2::new(-TILE_SIZE.0, -0.4 * TILE_SIZE.1),
                     ),
                 ),
                 Structure::Fishery => graphics::draw(
                     ctx,
-                    assets.fetch_sprite(SpriteHandle::Fishery),
+                    assets.drawable(DrawableHandle::Fishery),
                     DrawParam::new()
                         .dest(
                             map_pos_to_screen(pos)
@@ -136,7 +136,7 @@ impl Tile {
         if hit_test(ctx, pos) {
             graphics::draw(
                 ctx,
-                assets.fetch_mesh(MeshHandle::TileSelector),
+                assets.drawable(DrawableHandle::TileSelector),
                 DrawParam::new().dest(pos).color(random_color()),
             )?;
             //let pos = pos - na::Vector2::new(0.0, TILE_SIZE.1);

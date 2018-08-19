@@ -82,7 +82,7 @@ impl<'a, 'b> State for Game<'a, 'b> {
         if passed {
             let flood = _world.read_resource::<Time>().flood_timer;
             if flood < 1 {
-                _assets.fetch_sound(SoundHandle::WaveCrash).play();
+                _assets.sound(SoundHandle::WaveCrash).play();
                 mapgen::Flood.run_now(&mut _world.res);
                 _world.write_resource::<Time>().flood_timer = 8;
             }

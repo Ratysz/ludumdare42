@@ -5,7 +5,7 @@ use ggez::{
 use specs::prelude::*;
 use std::fmt::{Display, Formatter, Result};
 
-use assets::{random_color, Assets, MeshHandle, SoundHandle, SpriteHandle};
+use assets::{random_color, Assets, DrawableHandle, SoundHandle};
 use ecs::*;
 use gui;
 use input::{Command, InputExtra};

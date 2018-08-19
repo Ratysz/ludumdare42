@@ -7,8 +7,8 @@ authors = ["Ratys <alexander.sepity@gmail.com>"]
 chrono = "0.4"
 fern = { version = "0.5", features = ["colored"] }
 #ggez = { git = "https://github.com/ggez/ggez.git", rev = "c90722af02c47d384691783ba8e185a97fa88840"}
-#ggez = { path = "../ggez" }
-ggez = { git = "https://github.com/Ratysz/ggez.git", rev = "e403d8d6574ecaa0e91fd1f6f7766a2be0c6bdf0"}
+ggez = { path = "../ggez" }
+#ggez = { git = "https://github.com/Ratysz/ggez.git", rev = "e403d8d6574ecaa0e91fd1f6f7766a2be0c6bdf0"}
 log = "0.4"
 nalgebra = "0.15"
 noise = "0.5"

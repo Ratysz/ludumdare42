@@ -11,7 +11,7 @@ pub struct ContextMenu {
     near_city: bool,
     in_water: bool,
     on_shore: bool,
-    options: Vec<(na::Vector2<f32>, SpriteHandle)>,
+    options: Vec<(na::Vector2<f32>, DrawableHandle)>,
 }
 
 impl ContextMenu {
@@ -51,34 +51,34 @@ impl ContextMenu {
             let options = vec![
                 (
                     na::Vector2::new(-3.3 * TILE_SIZE.0, 0.5 * TILE_SIZE.0),
-                    SpriteHandle::Housing,
+                    DrawableHandle::Housing,
                 ),
                 (
                     na::Vector2::new(-1.1 * TILE_SIZE.0, 0.5 * TILE_SIZE.0),
-                    SpriteHandle::Powerplant,
+                    DrawableHandle::Powerplant,
                 ),
                 (
                     na::Vector2::new(1.1 * TILE_SIZE.0, 0.5 * TILE_SIZE.0),
-                    SpriteHandle::Fishery,
+                    DrawableHandle::Fishery,
                 ),
                 (
                     na::Vector2::new(3.3 * TILE_SIZE.0, 0.5 * TILE_SIZE.0),
-                    SpriteHandle::Farm,
+                    DrawableHandle::Farm,
                 ),
                 (
                     na::Vector2::new(-2.2 * TILE_SIZE.0, 1.5 * TILE_SIZE.0),
-                    SpriteHandle::Sanctuary,
+                    DrawableHandle::Sanctuary,
                 ),
                 (
                     na::Vector2::new(0.0 * TILE_SIZE.0, 1.5 * TILE_SIZE.0),
-                    SpriteHandle::Terraform,
+                    DrawableHandle::Terraform,
                 ),
                 (
                     na::Vector2::new(2.2 * TILE_SIZE.0, 1.5 * TILE_SIZE.0),
-                    SpriteHandle::Renewables,
+                    DrawableHandle::Renewables,
                 ),
             ];
-            assets.fetch_sound(SoundHandle::Click).play();
+            assets.sound(SoundHandle::Click).play();
             return Some(ContextMenu {
                 is_top: false,
                 target_entity: entity,
@@ -187,7 +187,7 @@ impl State for ContextMenu {
                     }
                 }
                 if modify {
-                    _assets.fetch_sound(SoundHandle::Construct).play();
+                    _assets.sound(SoundHandle::Construct).play();
                     time.turn_passed = true;
                     if pick_or_place {
                         grid.held_tile = None;
@@ -206,7 +206,7 @@ impl State for ContextMenu {
                         self.target_pos.z(),
                     );
                 } else if place {
-                    _assets.fetch_sound(SoundHandle::Construct).play();
+                    _assets.sound(SoundHandle::Construct).play();
                     time.turn_passed = true;
                     if pick_or_place {
                         grid.held_tile = None;
@@ -226,7 +226,7 @@ impl State for ContextMenu {
                     tiles.insert(entity, new_tile).unwrap();
                 }
             } else if pick_or_place {
-                _assets.fetch_sound(SoundHandle::Construct).play();
+                _assets.sound(SoundHandle::Construct).play();
                 grid.held_tile = Some(self.target_tile);
                 debug!(
                     "removing {} {} {}",
@@ -257,7 +257,7 @@ impl State for ContextMenu {
         let pos = tile::map_pos_to_screen(&self.target_pos);
         graphics::draw(
             _ctx,
-            _assets.fetch_mesh(MeshHandle::TileSelector),
+            _assets.drawable(DrawableHandle::TileSelector),
             DrawParam::new().dest(pos).color(graphics::BLACK),
         )?;
         let mut i = 0;
@@ -265,7 +265,7 @@ impl State for ContextMenu {
         for (vec, sprite) in &self.options {
             graphics::draw(
                 _ctx,
-                _assets.fetch_mesh(MeshHandle::Tile),
+                _assets.drawable(DrawableHandle::Tile),
                 DrawParam::new()
                     .dest(pos + vec + na::Vector2::new(0.0, 0.25 * TILE_SIZE.1))
                     .color(Color::new(0.0, 0.0, 0.0, 0.95))
@@ -273,7 +273,7 @@ impl State for ContextMenu {
             )?;
             graphics::draw(
                 _ctx,
-                _assets.fetch_sprite(*sprite),
+                _assets.drawable(*sprite),
                 DrawParam::new()
                     .dest(pos + vec + na::Vector2::new(-TILE_SIZE.0, -0.5 * TILE_SIZE.1)),
             )?;
@@ -281,7 +281,7 @@ impl State for ContextMenu {
             {
                 graphics::draw(
                     _ctx,
-                    _assets.fetch_mesh(MeshHandle::TileSelector),
+                    _assets.drawable(DrawableHandle::TileSelector),
                     DrawParam::new().dest(pos + vec).color(random_color()),
                 )?;
                 tooltip_drawn = true;
