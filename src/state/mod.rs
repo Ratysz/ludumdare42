@@ -81,6 +81,10 @@ pub trait State: Display {
         Ok(Transition::None)
     }
 
+    fn update_underlying(&self) -> bool {
+        false
+    }
+
     fn draw(&mut self, _ctx: &mut Context, _assets: &mut Assets, _world: &mut World) -> GameResult {
         Ok(())
     }

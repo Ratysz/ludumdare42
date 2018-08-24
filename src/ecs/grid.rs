@@ -1,45 +1,73 @@
 use super::*;
-use std::cmp::{Ord, Ordering};
-use std::collections::HashMap;
+use std::collections::{HashMap, VecDeque};
+use std::fmt::{self, Display, Formatter};
 
-#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
-pub struct Position {
-    x: usize,
-    y: usize,
-    z: usize,
-    ordering: i32,
+pub enum PlaceRejectionReason {
+    Invalid,
+    Flooded,
+    TooFar,
+    NotShore,
+    Occupied,
+    TooHigh,
 }
 
-impl Position {
-    pub fn x(&self) -> usize {
-        self.x
-    }
-
-    pub fn y(&self) -> usize {
-        self.y
-    }
-
-    pub fn z(&self) -> usize {
-        self.z
-    }
-}
-
-impl Ord for Position {
-    fn cmp(&self, other: &Position) -> Ordering {
-        self.ordering.cmp(&other.ordering)
+impl Display for PlaceRejectionReason {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        let string = match self {
+            PlaceRejectionReason::Invalid => "something is horribly wrong",
+            PlaceRejectionReason::Flooded => "flooded",
+            PlaceRejectionReason::TooFar => "too far from city",
+            PlaceRejectionReason::NotShore => "not a shore",
+            PlaceRejectionReason::Occupied => "occupied",
+            PlaceRejectionReason::TooHigh => "practically in space",
+        };
+        write!(f, "{}", string)
     }
 }
 
-impl PartialOrd for Position {
-    fn partial_cmp(&self, other: &Position) -> Option<Ordering> {
-        Some(self.cmp(&other))
+pub enum PickRejectionReason {
+    Invalid,
+    Flooded,
+    TooFar,
+    TooDeep,
+}
+
+impl Display for PickRejectionReason {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        let string = match self {
+            PickRejectionReason::Invalid => "something is horribly wrong",
+            PickRejectionReason::Flooded => "flooded",
+            PickRejectionReason::TooFar => "too far from city",
+            PickRejectionReason::TooDeep => "can't dig deeper",
+        };
+        write!(f, "{}", string)
+    }
+}
+
+struct TileStack {
+    tiles: VecDeque<Tile>,
+    civilized: bool,
+    flooded: bool,
+}
+
+impl TileStack {
+    fn new(depth: usize) -> TileStack {
+        TileStack {
+            tiles: VecDeque::with_capacity(depth),
+            civilized: false,
+            flooded: false,
+        }
+    }
+
+    fn height(&self) -> usize {
+        self.tiles.len()
     }
 }
 
 pub struct Grid {
     pub current_sealevel: usize,
     dimensions: (usize, usize, usize),
-    map: HashMap<(usize, usize), (usize, bool)>,
+    map: VecDeque<VecDeque<TileStack>>,
     pub held_tile: Option<Tile>,
 }
 
@@ -51,39 +79,19 @@ impl Default for Grid {
 
 impl Grid {
     pub fn new(width: usize, height: usize, depth: usize) -> Grid {
+        let mut map = VecDeque::with_capacity(height);
+        for i in 0..height {
+            let mut column = VecDeque::with_capacity(width);
+            for j in 0..width {
+                column.push_back(TileStack::new(depth));
+            }
+            map.push_back(column);
+        }
         Grid {
             current_sealevel: 0,
             dimensions: (width, height, depth),
-            map: HashMap::new(),
+            map,
             held_tile: None,
-        }
-    }
-
-    pub fn new_position(&mut self, tile: Tile, x: usize, y: usize, z: usize) -> Position {
-        let civilized = if let Tile::Structure(_) = tile {
-            true
-        } else {
-            false
-        };
-        {
-            let (height, civ) = self.map.entry((x, y)).or_insert((z, civilized));
-            if *height < z {
-                *height = z;
-            }
-            *civ = civilized;
-        }
-        let (w, h, d) = self.dimensions();
-        Position {
-            x,
-            y,
-            z,
-            ordering: (x as i32) - (y as i32) * (h as i32).pow(2) + (z as i32) * (d as i32).pow(3),
-        }
-    }
-
-    pub fn lower_heightmap(&mut self, x: usize, y: usize) {
-        if let Some((height, _)) = self.map.get_mut(&(x, y)) {
-            *height -= 1;
         }
     }
 
@@ -91,52 +99,82 @@ impl Grid {
         self.dimensions
     }
 
-    pub fn is_top_tile(&self, pos: &Position) -> bool {
-        if let Some((height, _)) = self.map.get(&(pos.x(), pos.y())) {
-            return pos.z() == *height;
+    pub fn tile(&self, x: usize, y: usize, z: usize) -> Option<Tile> {
+        if let Some(stack) = self.stack(x, y) {
+            return stack.tiles.get(z).map(|tile| *tile);
         }
-        false
+        None
     }
 
-    pub fn is_civilized(&self, x: usize, y: usize) -> bool {
-        if let Some((_, civilized)) = self.map.get(&(x, y)) {
-            return *civilized;
+    fn stack(&self, x: usize, y: usize) -> Option<&TileStack> {
+        if let Some(row) = self.map.get(y) {
+            return row.get(x);
         }
-        false
+        None
     }
 
-    pub fn uncivilize(&mut self, x: usize, y: usize) {
-        if let Some((_, civilized)) = self.map.get_mut(&(x, y)) {
-            *civilized = false;
+    fn adjacent_stacks(&self, x: usize, y: usize) -> [Option<&TileStack>; 4] {
+        if let Some(row) = self.map.get(y) {
+            [
+                x.checked_add(1).and_then(|x| row.get(x)),
+                x.checked_sub(1).and_then(|x| row.get(x)),
+                y.checked_add(1)
+                    .and_then(|y| self.map.get(y))
+                    .and_then(|row| row.get(x)),
+                y.checked_sub(1)
+                    .and_then(|y| self.map.get(y))
+                    .and_then(|row| row.get(x)),
+            ]
+        } else {
+            [None, None, None, None]
         }
     }
 
-    pub fn is_civilizable(&self, x: usize, y: usize) -> bool {
-        let (w, h, d) = self.dimensions();
-        (y > 0 && if let Some((_, civilized)) = self.map.get(&(x, y - 1)) {
-            *civilized
-        } else {
-            false
-        }) || (y < h && if let Some((_, civilized)) = self.map.get(&(x, y + 1)) {
-            *civilized
-        } else {
-            false
-        }) || (x > 0 && if let Some((_, civilized)) = self.map.get(&(x - 1, y)) {
-            *civilized
-        } else {
-            false
-        }) || (x < w && if let Some((_, civilized)) = self.map.get(&(x + 1, y)) {
-            *civilized
-        } else {
-            false
-        })
+    pub fn can_place(&self, x: usize, y: usize, tile: Tile) -> Result<(), PlaceRejectionReason> {
+        if let Some(stack) = self.stack(x, y) {
+            if stack.height() >= self.dimensions.2 {
+                return Err(PlaceRejectionReason::TooHigh);
+            }
+            if stack.flooded {
+                if tile == Tile::Water {
+                    return Ok(());
+                }
+                return Err(PlaceRejectionReason::Flooded);
+            }
+            if stack.civilized {
+                return Err(PlaceRejectionReason::Occupied);
+            }
+            for adjacent in &self.adjacent_stacks(x, y) {
+                if adjacent.map(|adjacent| adjacent.civilized) == Some(true) {
+                    return Ok(());
+                }
+            }
+            return Err(PlaceRejectionReason::TooFar);
+        }
+        Err(PlaceRejectionReason::Invalid)
     }
-}
 
-pub struct GridGravity;
+    pub fn can_pick(&self, x: usize, y: usize) -> Result<Tile, PickRejectionReason> {
+        if let Some(stack) = self.stack(x, y) {
+            if stack.flooded {
+                return Err(PickRejectionReason::Flooded);
+            }
+            for adjacent in &self.adjacent_stacks(x, y) {
+                if adjacent.map(|adjacent| adjacent.civilized) == Some(true) {
+                    return stack
+                        .tiles
+                        .back()
+                        .map(|tile| *tile)
+                        .ok_or(PickRejectionReason::TooDeep);
+                }
+            }
+            return Err(PickRejectionReason::TooFar);
+        }
+        Err(PickRejectionReason::Invalid)
+    }
 
-impl<'a> System<'a> for GridGravity {
-    type SystemData = (Write<'a, Grid>, WriteStorage<'a, Position>);
+    pub fn place(&self, x: usize, y: usize, tile: Tile) {}
 
-    fn run(&mut self, (grid, positions): Self::SystemData) {}
+    pub fn remove(&self, x: usize, y: usize, z: usize) {}
+    //ordering: (x as i32) - (y as i32) * (h as i32).pow(2) + (z as i32) * (d as i32).pow(3),
 }
