@@ -1,5 +1,6 @@
-use ecs::*;
 use specs::prelude::*;
+
+use ecs::{Grid, TileType};
 
 pub struct Time {
     pub game_over: bool,
@@ -48,11 +49,10 @@ impl<'a> System<'a> for AllThingsDoer {
         Entities<'a>,
         Write<'a, Time>,
         Write<'a, Grid>,
-        WriteStorage<'a, Position>,
-        WriteStorage<'a, Tile>,
+        ReadStorage<'a, TileType>,
     );
 
-    fn run(&mut self, (entities, mut time, mut grid, mut positions, mut tiles): Self::SystemData) {
+    fn run(&mut self, (entities, mut time, mut grid, mut tiles): Self::SystemData) {
         if time.population_timer < 1 {
             time.population += 1;
             time.population_timer = 3;
@@ -68,29 +68,27 @@ impl<'a> System<'a> for AllThingsDoer {
         let mut sanctuary_bonus = 0;
         for tile in tiles.join() {
             match tile {
-                Tile::Structure(structure) => match structure {
-                    Structure::Housing => {
-                        time.homeless -= 1;
-                        time.power -= 1;
-                    }
-                    Structure::Sanctuary => {
-                        sanctuary_bonus += 1;
-                        time.power -= 1;
-                    }
-                    Structure::Powerplant => {
-                        time.nature -= 1;
-                        time.power += 3;
-                    }
-                    Structure::Renewables => {
-                        time.power += 2;
-                    }
-                    Structure::Farm => {
-                        time.food += 2;
-                    }
-                    Structure::Fishery => {
-                        time.food += 3;
-                    }
-                },
+                TileType::Housing => {
+                    time.homeless -= 1;
+                    time.power -= 1;
+                }
+                TileType::Sanctuary => {
+                    sanctuary_bonus += 1;
+                    time.power -= 1;
+                }
+                TileType::Powerplant => {
+                    time.nature -= 1;
+                    time.power += 3;
+                }
+                TileType::Renewables => {
+                    time.power += 2;
+                }
+                TileType::Farm => {
+                    time.food += 2;
+                }
+                TileType::Fishery => {
+                    time.food += 3;
+                }
                 _ => (),
             }
         }

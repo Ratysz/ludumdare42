@@ -1,15 +1,10 @@
-use specs::prelude::*;
-use specs::world::Index;
-
-use gui;
-use time::Time;
-
-pub mod grid;
-pub mod mapgen;
-pub mod tile;
+mod grid;
+mod mapgen;
+mod tile;
+mod tile_generator;
+mod time;
 
 pub use self::grid::Grid;
-pub use self::grid::Position;
-pub use self::tile::Structure;
-pub use self::tile::Tile;
-pub use self::tile::TILE_SIZE;
+pub use self::mapgen::GenerateMap;
+pub use self::tile::*;
+pub use self::time::Time;

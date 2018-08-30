@@ -1,14 +1,20 @@
-use super::*;
 use ggez::graphics::{DrawMode, Mesh, Rect};
 use ggez::input::mouse;
+use ggez::{Context, GameResult};
 use nalgebra as na;
+use specs::prelude::*;
 use std::f32::INFINITY;
+use std::fmt::{self, Display, Formatter};
+
+use super::{State, Transition};
+use assets::Assets;
+use input::{Command, InputExtra};
 
 pub struct GameOver(pub i32);
 
 impl State for GameOver {
     fn draw(&mut self, _ctx: &mut Context, _assets: &mut Assets, _world: &mut World) -> GameResult {
-        let rect = Mesh::new_rectangle(_ctx, DrawMode::Fill, Rect::new(0.0, 0.0, 640.0, 380.0))?;
+        /*let rect = Mesh::new_rectangle(_ctx, DrawMode::Fill, Rect::new(0.0, 0.0, 640.0, 380.0))?;
         graphics::draw(
             _ctx,
             &rect,
@@ -21,7 +27,8 @@ impl State for GameOver {
             _ctx,
             &text,
             DrawParam::new().dest(na::Point2::new(0.0, 100.0)),
-        )
+        )*/
+        Ok(())
     }
 
     fn input(
@@ -32,8 +39,8 @@ impl State for GameOver {
         _command: Command,
         _extra: InputExtra,
     ) -> GameResult<Transition> {
-        _world.write_resource::<Time>().game_over = false;
-        _world.write_resource::<Time>().game_over_transition_done = true;
+        /*_world.write_resource::<Time>().game_over = false;
+        _world.write_resource::<Time>().game_over_transition_done = true;*/
         Ok(Transition::Pop)
     }
 
@@ -43,7 +50,7 @@ impl State for GameOver {
 }
 
 impl Display for GameOver {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f, "Game Over")
     }
 }

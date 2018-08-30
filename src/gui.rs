@@ -1,7 +1,8 @@
-use ecs::TILE_SIZE;
 use ggez::graphics::{self, Color, DrawMode, DrawParam, Mesh, Rect, Text, TextFragment, WHITE};
 use ggez::{Context, GameResult};
 use nalgebra as na;
+
+use ecs::{Time, TILE_SIZE};
 
 pub fn draw_tooltip(ctx: &mut Context, pos: na::Point2<f32>, text: &Text) -> GameResult {
     let dim = text.dimensions(ctx);
@@ -28,7 +29,7 @@ pub const RED: Color = Color {
     a: 1.0,
 };
 
-pub fn draw_score(ctx: &mut Context, time: &super::time::Time) -> GameResult {
+pub fn draw_score(ctx: &mut Context, time: Time) -> GameResult {
     let pos = na::Point2::new(0.0, 0.0);
     let mut text = Text::new(TextFragment::new(format!(
         "Turn: {}  Score: {}\n",

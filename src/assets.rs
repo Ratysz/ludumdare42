@@ -6,7 +6,7 @@ use nalgebra as na;
 use rand;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub enum DrawableHandle {
     Circle,
     Box,
@@ -29,6 +29,13 @@ pub enum SoundHandle {
     Construct,
     WaveCrash,
     Waves,
+}
+
+pub enum ColorGenerator {
+    Terrain,
+    Water,
+    Tint(f32, f32, f32),
+    Random,
 }
 
 pub struct Assets {
@@ -237,11 +244,53 @@ impl Assets {
     }
 }
 
-pub fn random_color() -> Color {
-    Color::new(
-        rand::random::<f32>(),
-        rand::random::<f32>(),
-        rand::random::<f32>(),
-        1.0,
-    )
+impl ColorGenerator {
+    pub fn generate(self, z: usize, sea_level: usize, depth: usize) -> Color {
+        match self {
+            ColorGenerator::Terrain => {
+                let z = (z as f32 - sea_level as f32) / depth as f32;
+                if z < -0.05 {
+                    Color::new(0.2, 0.1, 0.05, 1.0)
+                } else if z < 0.05 {
+                    Color::new(0.8, 0.7, 0.1, 1.0)
+                } else if z < 0.30 {
+                    Color::new(
+                        (1.0 * (0.4 - z)).min(0.4),
+                        (1.8 * (0.4 - z)).min(0.8),
+                        0.0,
+                        1.0,
+                    )
+                } else if z < 0.40 {
+                    Color::new(
+                        (1.5 * z).min(1.0),
+                        (1.0 * z).min(1.0),
+                        (0.5 * z).min(1.0),
+                        1.0,
+                    )
+                } else {
+                    Color::new(
+                        (2.0 * z).min(1.0),
+                        (2.0 * z).min(1.0),
+                        (2.0 * z).min(1.0),
+                        1.0,
+                    )
+                }
+            }
+            ColorGenerator::Water => Color::new(
+                0.0,
+                0.2 * ((0.5 * depth as f32 + z as f32 - sea_level as f32) / (0.5 * depth as f32))
+                    .min(1.0),
+                0.8 * ((0.5 * depth as f32 + z as f32 - sea_level as f32) / (0.5 * depth as f32))
+                    .min(1.0),
+                0.4,
+            ),
+            ColorGenerator::Tint(r, g, b) => Color::new(r, g, b, 1.0),
+            ColorGenerator::Random => Color::new(
+                rand::random::<f32>(),
+                rand::random::<f32>(),
+                rand::random::<f32>(),
+                1.0,
+            ),
+        }
+    }
 }

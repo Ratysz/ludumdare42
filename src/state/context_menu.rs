@@ -1,5 +1,5 @@
-use super::*;
 use nalgebra as na;
+use specs::prelude::*;
 use specs::world::Index;
 use std::f32::INFINITY;
 

@@ -1,8 +1,43 @@
-use super::*;
-use noise::{NoiseFn, Perlin, Seedable};
-use rand;
-use std::collections::HashMap;
+use noise::NoiseFn;
+use specs::prelude::*;
 
+use super::{Grid, TileType};
+
+pub struct GenerateMap;
+
+impl<'a> System<'a> for GenerateMap {
+    type SystemData = (Write<'a, Grid>, Write<'a, LazyUpdate>);
+
+    fn run(&mut self, (mut grid, updater): Self::SystemData) {
+        *grid = Grid::default();
+        let (w, h, d) = grid.dimensions();
+        let noise = grid.noise();
+
+        for x in 0..w {
+            for y in 0..h {
+                let bound = {
+                    let (w, h, d) = (w as f64, h as f64, d as f64);
+                    let (x, y) = (x as f64, y as f64);
+                    (d * (y / h + 0.5 * noise.get([(1.0 + x / w), (1.0 + y / h)]).abs()))
+                        .max(1.0)
+                        .min(d - 1.0)
+                        .floor() as usize
+                };
+                for z in 0..bound {
+                    grid.place(TileType::Terrain, x, y);
+                }
+            }
+        }
+
+        for x in 0..w {
+            if grid.height(x, 0) < d / 4 {
+                grid.place(TileType::Water, x, 0);
+            }
+        }
+    }
+}
+
+/*
 pub struct GenerateMap;
 
 impl<'a> System<'a> for GenerateMap {
@@ -397,3 +432,4 @@ fn flood_check_part(
         }
     }
 }
+*/

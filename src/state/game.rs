@@ -1,7 +1,15 @@
-use super::*;
+use ggez::graphics::{Align, Color, Scale, Text, TextFragment};
 use ggez::input::mouse;
+use ggez::{Context, GameResult};
 use nalgebra as na;
+use specs::prelude::*;
 use std::f32::INFINITY;
+use std::fmt::{self, Display, Formatter};
+
+use super::{State, Transition};
+use assets::{Assets, SoundHandle};
+use ecs::{GenerateMap, Time};
+use input::{Command, InputExtra};
 
 pub struct Game<'a, 'b> {
     logic: Dispatcher<'a, 'b>,
@@ -19,8 +27,8 @@ impl<'a, 'b> Game<'a, 'b> {
         let mut animation = DispatcherBuilder::new().build();
         animation.setup(&mut world.res);
 
-        let mut grid_populator = mapgen::GenerateMap;
-        <mapgen::GenerateMap as System>::setup(&mut grid_populator, &mut world.res);
+        let mut grid_populator = GenerateMap;
+        <GenerateMap as System>::setup(&mut grid_populator, &mut world.res);
         grid_populator.run_now(&mut world.res);
         world.maintain();
 
@@ -78,7 +86,7 @@ impl<'a, 'b> State for Game<'a, 'b> {
         _world: &mut World,
     ) -> GameResult {
         self.is_top = true;
-        let passed = _world.read_resource::<Time>().turn_passed;
+        /*let passed = _world.read_resource::<Time>().turn_passed;
         if passed {
             let flood = _world.read_resource::<Time>().flood_timer;
             if flood < 1 {
@@ -88,7 +96,7 @@ impl<'a, 'b> State for Game<'a, 'b> {
             }
             AllThingsDoer.run_now(&mut _world.res);
         }
-        _world.write_resource::<Time>().turn_passed = false;
+        _world.write_resource::<Time>().turn_passed = false;*/
         Ok(())
     }
 
@@ -102,12 +110,12 @@ impl<'a, 'b> State for Game<'a, 'b> {
     ) -> GameResult<Transition> {
         match _command {
             Command::ContextMenu => if let InputExtra::XY(x, y) = _extra {
-                if let Some(menu) = ContextMenu::new(_ctx, _world, _assets) {
+                /*if let Some(menu) = ContextMenu::new(_ctx, _world, _assets) {
                     return Ok(Transition::Push(Box::new(menu)));
-                }
+                }*/
             },
             Command::Click => if let InputExtra::XY(x, y) = _extra {
-                if let Some(menu) = ContextMenu::new(_ctx, _world, _assets) {
+                /*if let Some(menu) = ContextMenu::new(_ctx, _world, _assets) {
                     return Ok(Transition::Push(Box::new(menu)));
                 } else {
                     if ((260.0 - x as f32).abs() as u32) < self.skip_text.width(_ctx)
@@ -116,7 +124,7 @@ impl<'a, 'b> State for Game<'a, 'b> {
                         _world.write_resource::<Time>().turn_passed = true;
                         self.resume(_ctx, _assets, _world);
                     }
-                }
+                }*/
             },
             _ => (),
         }
@@ -143,7 +151,7 @@ impl<'a, 'b> State for Game<'a, 'b> {
 
     fn draw(&mut self, _ctx: &mut Context, _assets: &mut Assets, _world: &mut World) -> GameResult {
         self.animation.dispatch(&mut _world.res);
-        let time = _world.read_resource::<Time>();
+        /*let time = _world.read_resource::<Time>();
         let grid = _world.read_resource::<Grid>();
         let positions = _world.read_storage::<Position>();
         let tiles = _world.read_storage::<Tile>();
@@ -161,7 +169,7 @@ impl<'a, 'b> State for Game<'a, 'b> {
                 }
             }
         }
-        gui::draw_score(_ctx, &time)?;
+        //gui::draw_score(_ctx, &time)?;
         let offset = self.skip_text.width(_ctx) as f32;
         let mpos = mouse::get_position(_ctx);
         let color = if ((260.0 - mpos.x as f32).abs() as u32) < self.skip_text.width(_ctx)
@@ -178,7 +186,7 @@ impl<'a, 'b> State for Game<'a, 'b> {
                 .dest(na::Point2::new(260.0 - offset, 5.0))
                 .color(color),
         )?;
-        graphics::draw(_ctx, &self.rules_text, DrawParam::new())?;
+        graphics::draw(_ctx, &self.rules_text, DrawParam::new())?;*/
         Ok(())
     }
 
@@ -188,7 +196,7 @@ impl<'a, 'b> State for Game<'a, 'b> {
 }
 
 impl<'a, 'b> Display for Game<'a, 'b> {
-    fn fmt(&self, f: &mut Formatter) -> Result {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         write!(f, "Game")
     }
 }

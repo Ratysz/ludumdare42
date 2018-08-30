@@ -5,9 +5,9 @@ use ggez::{Context, GameResult};
 use specs::prelude::*;
 
 use assets::Assets;
+use ecs::Time;
 use input::{Command, InputExtra, InputHandler};
 use state::{MainMenu, State, Transition};
-use time::Time;
 
 pub struct Game {
     assets: Assets,

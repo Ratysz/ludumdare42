@@ -1,14 +1,17 @@
-use super::*;
+use noise::{NoiseFn, Perlin, Seedable};
+use rand;
 use std::collections::{HashMap, VecDeque};
 use std::fmt::{self, Display, Formatter};
+
+use super::TileType;
 
 pub enum PlaceRejectionReason {
     Invalid,
     Flooded,
     TooFar,
+    TooHigh,
     NotShore,
     Occupied,
-    TooHigh,
 }
 
 impl Display for PlaceRejectionReason {
@@ -17,9 +20,9 @@ impl Display for PlaceRejectionReason {
             PlaceRejectionReason::Invalid => "something is horribly wrong",
             PlaceRejectionReason::Flooded => "flooded",
             PlaceRejectionReason::TooFar => "too far from city",
+            PlaceRejectionReason::TooHigh => "practically in space",
             PlaceRejectionReason::NotShore => "not a shore",
             PlaceRejectionReason::Occupied => "occupied",
-            PlaceRejectionReason::TooHigh => "practically in space",
         };
         write!(f, "{}", string)
     }
@@ -30,6 +33,7 @@ pub enum PickRejectionReason {
     Flooded,
     TooFar,
     TooDeep,
+    Occupied,
 }
 
 impl Display for PickRejectionReason {
@@ -39,13 +43,14 @@ impl Display for PickRejectionReason {
             PickRejectionReason::Flooded => "flooded",
             PickRejectionReason::TooFar => "too far from city",
             PickRejectionReason::TooDeep => "can't dig deeper",
+            PickRejectionReason::Occupied => "can't pick up more",
         };
         write!(f, "{}", string)
     }
 }
 
 struct TileStack {
-    tiles: VecDeque<Tile>,
+    tiles: VecDeque<TileType>,
     civilized: bool,
     flooded: bool,
 }
@@ -65,20 +70,21 @@ impl TileStack {
 }
 
 pub struct Grid {
-    pub current_sealevel: usize,
+    pub sea_level: usize,
     dimensions: (usize, usize, usize),
     map: VecDeque<VecDeque<TileStack>>,
-    pub held_tile: Option<Tile>,
+    pub held_tile: Option<TileType>,
+    noise: Perlin,
 }
 
 impl Default for Grid {
     fn default() -> Grid {
-        Grid::new(8, 8, 16)
+        Grid::new(8, 8, 16, rand::random())
     }
 }
 
 impl Grid {
-    pub fn new(width: usize, height: usize, depth: usize) -> Grid {
+    pub fn new(width: usize, height: usize, depth: usize, seed: u32) -> Grid {
         let mut map = VecDeque::with_capacity(height);
         for i in 0..height {
             let mut column = VecDeque::with_capacity(width);
@@ -88,10 +94,11 @@ impl Grid {
             map.push_back(column);
         }
         Grid {
-            current_sealevel: 0,
+            sea_level: 0,
             dimensions: (width, height, depth),
             map,
             held_tile: None,
+            noise: Perlin::new().set_seed(seed),
         }
     }
 
@@ -99,16 +106,34 @@ impl Grid {
         self.dimensions
     }
 
-    pub fn tile(&self, x: usize, y: usize, z: usize) -> Option<Tile> {
+    pub fn tile(&self, x: usize, y: usize, z: usize) -> Option<TileType> {
         if let Some(stack) = self.stack(x, y) {
             return stack.tiles.get(z).map(|tile| *tile);
         }
         None
     }
 
+    pub fn height(&self, x: usize, y: usize) -> usize {
+        if let Some(stack) = self.stack(x, y) {
+            return stack.height();
+        }
+        usize::max_value()
+    }
+
+    pub fn noise(&self) -> Perlin {
+        self.noise
+    }
+
     fn stack(&self, x: usize, y: usize) -> Option<&TileStack> {
         if let Some(row) = self.map.get(y) {
             return row.get(x);
+        }
+        None
+    }
+
+    fn stack_mut(&mut self, x: usize, y: usize) -> Option<&mut TileStack> {
+        if let Some(row) = self.map.get_mut(y) {
+            return row.get_mut(x);
         }
         None
     }
@@ -130,13 +155,18 @@ impl Grid {
         }
     }
 
-    pub fn can_place(&self, x: usize, y: usize, tile: Tile) -> Result<(), PlaceRejectionReason> {
+    pub fn can_place(
+        &self,
+        x: usize,
+        y: usize,
+        tile: TileType,
+    ) -> Result<(), PlaceRejectionReason> {
         if let Some(stack) = self.stack(x, y) {
             if stack.height() >= self.dimensions.2 {
                 return Err(PlaceRejectionReason::TooHigh);
             }
             if stack.flooded {
-                if tile == Tile::Water {
+                if tile == TileType::Water {
                     return Ok(());
                 }
                 return Err(PlaceRejectionReason::Flooded);
@@ -154,7 +184,10 @@ impl Grid {
         Err(PlaceRejectionReason::Invalid)
     }
 
-    pub fn can_pick(&self, x: usize, y: usize) -> Result<Tile, PickRejectionReason> {
+    pub fn can_pick(&self, x: usize, y: usize) -> Result<TileType, PickRejectionReason> {
+        if self.held_tile.is_some() {
+            return Err(PickRejectionReason::Occupied);
+        }
         if let Some(stack) = self.stack(x, y) {
             if stack.flooded {
                 return Err(PickRejectionReason::Flooded);
@@ -173,8 +206,21 @@ impl Grid {
         Err(PickRejectionReason::Invalid)
     }
 
-    pub fn place(&self, x: usize, y: usize, tile: Tile) {}
+    pub fn place(&mut self, tile: TileType, x: usize, y: usize) {
+        let ceiling = self.dimensions.2;
+        if let Some(stack) = self.stack_mut(x, y) {
+            if stack.height() < ceiling {
+                stack.tiles.push_back(tile);
+            }
+        }
+    }
 
-    pub fn remove(&self, x: usize, y: usize, z: usize) {}
+    pub fn remove(&mut self, x: usize, y: usize, z: usize) -> Option<TileType> {
+        if let Some(stack) = self.stack_mut(x, y) {
+            return stack.tiles.remove(z);
+        }
+        None
+    }
+
     //ordering: (x as i32) - (y as i32) * (h as i32).pow(2) + (z as i32) * (d as i32).pow(3),
 }
