@@ -1,9 +1,17 @@
 use specs::prelude::*;
 
-use super::{Grid, TileColor, TileDrawable, TileTooltip, TileType};
+use super::{Grid, TileColor, TileDrawable, TilePosition, TileTooltip, TileType};
 use assets::{ColorGenerator, DrawableHandle};
 
-fn create(
+pub type TileCreationSystemData<'a> = (
+    ReadStorage<'a, TileType>,
+    ReadStorage<'a, TileDrawable>,
+    ReadStorage<'a, TileColor>,
+    ReadStorage<'a, TileTooltip>,
+    ReadStorage<'a, TilePosition>,
+);
+
+pub fn create(
     entities: &Entities,
     updater: &LazyUpdate,
     grid: &mut Grid,
@@ -55,14 +63,14 @@ fn create(
         ),
     };
 
+    grid.place(tile_type, x, y);
+    let z = grid.height(x, y);
     let drawable = TileDrawable::new(drawable);
-    let color = TileColor::new(
-        color,
-        grid.height(x, y) + 1,
-        grid.sea_level,
-        grid.dimensions().2,
-    );
+    let color = TileColor::new(color, z, grid.sea_level, grid.dimensions().2);
     let tooltip = TileTooltip::new(tooltip.to_owned());
+    let position = TilePosition::new(x, y, z, grid.dimensions());
+
+    debug!("Created {:?} at ({}, {}, {})", tile_type, x, y, z);
 
     updater
         .create_entity(entities)
@@ -70,5 +78,6 @@ fn create(
         .with(drawable)
         .with(color)
         .with(tooltip)
+        .with(position)
         .build()
 }

@@ -8,12 +8,13 @@ use std::fmt::{self, Display, Formatter};
 
 use super::{State, Transition};
 use assets::{Assets, SoundHandle};
-use ecs::{GenerateMap, Time};
+use ecs::{drawing, mapgen, tile_generator::TileCreationSystemData, Time};
 use input::{Command, InputExtra};
 
 pub struct Game<'a, 'b> {
-    logic: Dispatcher<'a, 'b>,
-    animation: Dispatcher<'a, 'b>,
+    dispatcher_reset: Dispatcher<'a, 'b>,
+    dispatcher_turn: Dispatcher<'a, 'b>,
+    dispatcher_animation: Dispatcher<'a, 'b>,
     is_top: bool,
     skip_text: Text,
     rules_text: Text,
@@ -21,15 +22,20 @@ pub struct Game<'a, 'b> {
 
 impl<'a, 'b> Game<'a, 'b> {
     pub fn new<'c>(world: &'c mut World) -> Game<'a, 'b> {
-        let mut logic = DispatcherBuilder::new().build();
-        logic.setup(&mut world.res);
+        let mut dispatcher_reset = DispatcherBuilder::new()
+            .with(mapgen::GenerateMap, "generate_map", &[])
+            .build();
+        dispatcher_reset.setup(&mut world.res);
+        world.setup::<TileCreationSystemData>();
 
-        let mut animation = DispatcherBuilder::new().build();
-        animation.setup(&mut world.res);
+        let mut dispatcher_turn = DispatcherBuilder::new().build();
+        dispatcher_turn.setup(&mut world.res);
 
-        let mut grid_populator = GenerateMap;
-        <GenerateMap as System>::setup(&mut grid_populator, &mut world.res);
-        grid_populator.run_now(&mut world.res);
+        let mut dispatcher_animation = DispatcherBuilder::new().build();
+        dispatcher_animation.setup(&mut world.res);
+        world.setup::<drawing::DrawTilesSystemData>();
+
+        dispatcher_reset.dispatch(&mut world.res);
         world.maintain();
 
         let mut skip_text = Text::new("[skip turn]");
@@ -44,8 +50,9 @@ impl<'a, 'b> Game<'a, 'b> {
         rules_text.set_bounds(na::Point2::new(640.0, INFINITY), Align::Right);
 
         Game {
-            logic,
-            animation,
+            dispatcher_reset,
+            dispatcher_turn,
+            dispatcher_animation,
             is_top: false,
             skip_text,
             rules_text,
@@ -150,7 +157,8 @@ impl<'a, 'b> State for Game<'a, 'b> {
     }
 
     fn draw(&mut self, _ctx: &mut Context, _assets: &mut Assets, _world: &mut World) -> GameResult {
-        self.animation.dispatch(&mut _world.res);
+        self.dispatcher_animation.dispatch(&mut _world.res);
+        drawing::draw_tiles(_ctx, _assets, _world)?;
         /*let time = _world.read_resource::<Time>();
         let grid = _world.read_resource::<Grid>();
         let positions = _world.read_storage::<Position>();

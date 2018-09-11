@@ -1,10 +1,10 @@
+pub mod drawing;
 mod grid;
-mod mapgen;
+pub mod mapgen;
 mod tile;
-mod tile_generator;
+pub mod tile_generator;
 mod time;
 
 pub use self::grid::Grid;
-pub use self::mapgen::GenerateMap;
 pub use self::tile::*;
 pub use self::time::Time;

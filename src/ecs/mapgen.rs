@@ -1,14 +1,14 @@
 use noise::NoiseFn;
 use specs::prelude::*;
 
-use super::{Grid, TileType};
+use super::{tile_generator, Grid, TileType};
 
 pub struct GenerateMap;
 
 impl<'a> System<'a> for GenerateMap {
-    type SystemData = (Write<'a, Grid>, Write<'a, LazyUpdate>);
+    type SystemData = (Entities<'a>, Write<'a, Grid>, Read<'a, LazyUpdate>);
 
-    fn run(&mut self, (mut grid, updater): Self::SystemData) {
+    fn run(&mut self, (entities, mut grid, updater): Self::SystemData) {
         *grid = Grid::default();
         let (w, h, d) = grid.dimensions();
         let noise = grid.noise();
@@ -24,14 +24,14 @@ impl<'a> System<'a> for GenerateMap {
                         .floor() as usize
                 };
                 for z in 0..bound {
-                    grid.place(TileType::Terrain, x, y);
+                    tile_generator::create(&entities, &updater, &mut grid, TileType::Terrain, x, y);
                 }
             }
         }
 
         for x in 0..w {
             if grid.height(x, 0) < d / 4 {
-                grid.place(TileType::Water, x, 0);
+                tile_generator::create(&entities, &updater, &mut grid, TileType::Water, x, 0);
             }
         }
     }

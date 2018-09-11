@@ -1,20 +1,27 @@
 use ggez::graphics::Color;
 use specs::prelude::*;
+use std::cmp::{Ord, Ordering, PartialOrd};
+use std::ops::Deref;
 
+use super::Grid;
 use assets::{ColorGenerator, DrawableHandle};
 
 pub const TILE_SIZE: (f32, f32) = (32.0, 32.0);
 
-#[derive(Component, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Component, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TileDrawable(DrawableHandle);
 
 impl TileDrawable {
     pub fn new(handle: DrawableHandle) -> TileDrawable {
         TileDrawable(handle)
     }
+}
 
-    pub fn get(&self) -> DrawableHandle {
-        self.0
+impl Deref for TileDrawable {
+    type Target = DrawableHandle;
+
+    fn deref(&self) -> &DrawableHandle {
+        &self.0
     }
 }
 
@@ -29,9 +36,13 @@ impl TileColor {
     pub fn from_color(color: Color) -> TileColor {
         TileColor(color)
     }
+}
 
-    pub fn get(&self) -> Color {
-        self.0
+impl Deref for TileColor {
+    type Target = Color;
+
+    fn deref(&self) -> &Color {
+        &self.0
     }
 }
 
@@ -49,7 +60,7 @@ mod color_serde {
         where
             S: Serializer,
         {
-            TileColor(self.get().to_rgba_u32()).serialize(serializer)
+            TileColor(self.to_rgba_u32()).serialize(serializer)
         }
     }
 
@@ -64,41 +75,77 @@ mod color_serde {
     }
 }
 
-#[derive(Component, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Component, Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TileTooltip(String);
 
 impl TileTooltip {
     pub fn new(tooltip: String) -> TileTooltip {
         TileTooltip(tooltip)
     }
+}
 
-    pub fn get(&self) -> &str {
+impl Deref for TileTooltip {
+    type Target = String;
+
+    fn deref(&self) -> &String {
         &self.0
     }
 }
 
-#[derive(Component, Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct TilePosition(usize, usize, usize);
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TilePosition {
+    x: usize,
+    y: usize,
+    z: usize,
+    ordering: i32,
+}
 
 impl TilePosition {
-    pub fn new(x: usize, y: usize, z: usize) -> TilePosition {
-        TilePosition(x, y, z)
+    pub fn new(
+        x: usize,
+        y: usize,
+        z: usize,
+        grid_dimensions: (usize, usize, usize),
+    ) -> TilePosition {
+        TilePosition {
+            x,
+            y,
+            z,
+            ordering: {
+                let (x, y, z) = (x as i32, y as i32, z as i32);
+                let (w, h, d) = grid_dimensions;
+                let (w, h, d) = (w as i32, h as i32, d as i32);
+                x - y * h * h + z * d * d * d
+            },
+        }
     }
 
     pub fn x(&self) -> usize {
-        self.0
+        self.x
     }
 
     pub fn y(&self) -> usize {
-        self.1
+        self.y
     }
 
     pub fn z(&self) -> usize {
-        self.2
+        self.z
     }
 }
 
-#[derive(Component, Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+impl Ord for TilePosition {
+    fn cmp(&self, other: &TilePosition) -> Ordering {
+        self.ordering.cmp(&other.ordering)
+    }
+}
+
+impl PartialOrd for TilePosition {
+    fn partial_cmp(&self, other: &TilePosition) -> Option<Ordering> {
+        Some(self.cmp(&other))
+    }
+}
+
+#[derive(Component, Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum TileType {
     Water,
     Terrain,
